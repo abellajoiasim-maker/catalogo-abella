@@ -1,1 +1,33 @@
+<!-- ========================= -->
+<!-- galvanicas.html -->
+<!-- ========================= -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Galvânicas</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="js/firebase.js"></script>
+</head>
+<body class="bg-black text-white p-4">
 
+<h1 class="text-[#caa85c] text-xl mb-4">Galvânicas</h1>
+
+<div id="lista"></div>
+
+<script>
+db.ref('galvanicas').on('value', snap=>{
+ lista.innerHTML="";
+ snap.forEach(g=>{
+  const item = g.val();
+  lista.innerHTML += `
+  <div class="bg-[#141414] p-3 rounded-xl mb-2">
+   <p>${item.nome}</p>
+   <p>${item.cidade}</p>
+   <a href="https://wa.me/${item.whatsapp}" class="text-green-400">WhatsApp</a>
+  </div>`;
+ });
+});
+</script>
+</body>
+</html>
