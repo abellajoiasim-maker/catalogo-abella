@@ -8,13 +8,13 @@
 <script src="js/app.js"></script>
 
 <style>
-body{background:#0b0b0b;color:#fff;font-family:Arial}
+body{background:#0b0b0b;color:#fff}
 </style>
 </head>
 
 <body class="p-4">
 
-<h1 class="text-[#caa85c] mb-3">Carrinho</h1>
+<h1 class="text-[#caa85c] mb-4">Carrinho</h1>
 
 <div id="lista"></div>
 <div id="resumo" class="mt-4"></div>
@@ -27,45 +27,42 @@ Finalizar no WhatsApp
 <script>
 function render(){
 
- lista.innerHTML = "";
-
- let subtotal = 0;
+ lista.innerHTML="";
 
  carrinho.forEach(i=>{
-  subtotal += i.price * i.quantidade;
+  lista.innerHTML+=`
+  <div class="bg-[#141414] p-3 rounded mb-2">
+    <p>${i.name}</p>
 
-  lista.innerHTML += `
-  <div class="mb-2">
-    ${i.quantidade}x ${i.name}
+    <div class="flex justify-between mt-2">
+      <div>
+        <button onclick="alterarQtd('${i.id}',-1)">-</button>
+        ${i.quantidade}
+        <button onclick="alterarQtd('${i.id}',1)">+</button>
+      </div>
+
+      <button onclick="removerItem('${i.id}')">🗑</button>
+    </div>
   </div>`;
  });
 
- let pct =
- subtotal>=2500?20:
- subtotal>=1000?15:
- subtotal>=500?10:
- subtotal>=300?5:0;
+ const t = calcularTotal();
 
- let desc = subtotal * (pct/100);
- let pix = subtotal>=300 ? subtotal*0.05 : 0;
-
- let total = subtotal - desc - pix;
-
- resumo.innerHTML = `
- <p>Subtotal: R$ ${subtotal.toFixed(2)}</p>
- <p>Desconto: -R$ ${desc.toFixed(2)}</p>
- <p>PIX: -R$ ${pix.toFixed(2)}</p>
- <h2 class="text-[#caa85c] font-bold mt-2">
- Total: R$ ${total.toFixed(2)}
+ resumo.innerHTML=`
+ <p>Subtotal: ${t.subtotal.toFixed(2)}</p>
+ <p>Desconto: ${t.desconto.toFixed(2)}</p>
+ <p>PIX: ${t.pix.toFixed(2)}</p>
+ <h2 class="text-[#caa85c] font-bold">
+ Total: ${t.total.toFixed(2)}
  </h2>`;
 }
 
 function finalizar(){
 
- let msg = "*Pedido Abella Joias*%0A";
+ let msg="*Pedido Abella Joias*%0A";
 
  carrinho.forEach(i=>{
-  msg += `${i.quantidade}x ${i.name}%0A`;
+  msg+=`${i.quantidade}x ${i.name}%0A`;
  });
 
  window.open("https://wa.me/5519988207658?text="+msg);
