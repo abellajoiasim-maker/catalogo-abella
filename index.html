@@ -14,14 +14,32 @@
 
 <style>
 body{background:#0b0b0b;color:#fff;font-family:Arial}
-.card{border-radius:14px;overflow:hidden;background:#141414}
+.cat-card{
+  border-radius:16px;
+  overflow:hidden;
+  position:relative;
+  cursor:pointer;
+}
+.cat-card img{
+  width:100%;
+  height:140px;
+  object-fit:cover;
+}
+.overlay{
+  position:absolute;
+  bottom:0;
+  width:100%;
+  background:linear-gradient(transparent, rgba(0,0,0,0.9));
+  padding:8px;
+  text-align:center;
+}
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 HEADER FIXO -->
-<div class="fixed top-0 left-0 right-0 bg-black p-3 flex justify-between items-center z-50 border-b border-gray-800">
+<!-- 🔥 HEADER -->
+<div class="fixed top-0 left-0 right-0 bg-black p-3 flex justify-between items-center border-b border-gray-800 z-50">
   <span class="text-[#caa85c] font-bold">ABELLA</span>
 
   <div class="flex gap-2">
@@ -34,11 +52,14 @@ body{background:#0b0b0b;color:#fff;font-family:Arial}
 
 <div class="pt-16 px-3">
 
-<!-- 🔥 BANNER (VENDA) -->
+<!-- 🔥 BANNER -->
 <div class="bg-[#caa85c] text-black p-3 rounded-xl text-center mb-3">
   <p class="text-sm font-bold">💎 ATÉ 20% OFF + 5% NO PIX</p>
   <p class="text-xs">Quanto mais você compra, mais economiza</p>
 </div>
+
+<!-- 🔥 PROGRESSO -->
+<div id="progresso" class="text-center text-yellow-400 text-sm mb-3"></div>
 
 <!-- 🔍 BUSCA -->
 <input 
@@ -52,7 +73,7 @@ class="w-full p-3 mb-3 rounded-xl text-black"
 
 </div>
 
-<!-- 💬 WHATSAPP FIXO -->
+<!-- 💬 WHATS -->
 <a href="https://wa.me/5519988207658"
 class="fixed bottom-4 left-4 bg-green-500 px-4 py-3 rounded-full shadow-lg">
 💬
@@ -60,12 +81,38 @@ class="fixed bottom-4 left-4 bg-green-500 px-4 py-3 rounded-full shadow-lg">
 
 <script>
 let listaCategorias = [];
+let carrinho = JSON.parse(localStorage.getItem('carrinho')||'[]');
+
+function atualizarBarra(){
+ let total=0;
+ carrinho.forEach(i=> total+= i.price*i.quantidade);
+ document.getElementById("totalBar").innerText = "R$ "+total.toFixed(0);
+
+ // 🔥 PROGRESSO
+ if(total < 300){
+   progresso.innerHTML = `Faltam R$ ${(300-total).toFixed(0)} para 5% OFF`;
+ }
+ else if(total < 500){
+   progresso.innerHTML = `Faltam R$ ${(500-total).toFixed(0)} para 10% OFF`;
+ }
+ else if(total < 1000){
+   progresso.innerHTML = `Faltam R$ ${(1000-total).toFixed(0)} para 15% OFF`;
+ }
+ else if(total < 2500){
+   progresso.innerHTML = `Faltam R$ ${(2500-total).toFixed(0)} para 20% OFF`;
+ }
+ else{
+   progresso.innerHTML = `🔥 Você atingiu o desconto máximo!`;
+ }
+}
 
 db.ref('categories').on('value', snap => {
   listaCategorias = [];
+
   snap.forEach(c => {
     listaCategorias.push({ id:c.key, ...c.val() });
   });
+
   render(listaCategorias);
 });
 
@@ -74,10 +121,10 @@ function render(lista){
 
   lista.forEach(cat => {
     cats.innerHTML += `
-    <div onclick="abrir('${cat.id}')" class="card">
-      <img src="${cat.image}" class="w-full h-32 object-cover">
-      <div class="p-2 text-center">
-        <p class="text-sm">${cat.name}</p>
+    <div onclick="abrir('${cat.id}')" class="cat-card">
+      <img src="${cat.image}">
+      <div class="overlay">
+        <p class="text-sm font-bold">${cat.name}</p>
       </div>
     </div>
     `;
@@ -86,6 +133,7 @@ function render(lista){
 
 busca.oninput = () => {
   const termo = busca.value.toLowerCase();
+
   render(listaCategorias.filter(c =>
     c.name.toLowerCase().includes(termo)
   ));
