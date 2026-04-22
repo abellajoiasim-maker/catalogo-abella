@@ -1,68 +1,134 @@
-<!-- ========================= -->
- <span id="totalBar">R$ 0</span>
- <a href="carrinho.html" class="bg-[#caa85c] text-black px-3 py-2 rounded">Carrinho</a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Produtos</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+<script src="js/firebase.js"></script>
+<script src="js/app.js"></script>
+
+<style>
+body{background:#0b0b0b;color:#fff;font-family:Arial}
+</style>
+</head>
+
+<body class="p-3">
+
+<!-- TOPO -->
+<div class="flex justify-between mb-3">
+  <a href="index.html">← Voltar</a>
+
+  <div class="flex gap-2">
+    <span id="totalBar">R$ 0</span>
+    <a href="carrinho.html" class="bg-[#caa85c] text-black px-3 py-2 rounded">
+      Carrinho
+    </a>
+  </div>
 </div>
+
+<!-- BUSCA -->
+<input id="buscaProd" placeholder="Buscar produto..."
+class="w-full p-2 mb-3 rounded text-black">
+
+<!-- PRODUTOS -->
+<div id="produtos" class="grid grid-cols-2 gap-3"></div>
+
+<button onclick="carregarMais()" 
+class="bg-[#caa85c] text-black w-full mt-4 p-2 rounded">
+Carregar mais
+</button>
 
 <script>
 const url = new URLSearchParams(location.search);
 const cat = url.get("cat");
 
 let todos = [];
+let todosOriginal = [];
 let pagina = 0;
 const limite = 20;
 
+// 🔥 RENDER
 function render(){
- produtos.innerHTML="";
- const inicio = pagina * limite;
- const lista = todos.slice(0, inicio + limite);
+ produtos.innerHTML = "";
+
+ const limiteAtual = (pagina + 1) * limite;
+ const lista = todos.slice(0, limiteAtual);
 
  lista.forEach(p=>{
   produtos.innerHTML += `
   <div class="bg-[#141414] p-3 rounded-xl">
    <img src="${p.image}" class="h-32 w-full object-cover rounded">
-   <p>${p.name}</p>
-   <p class="text-[#caa85c]">R$ ${p.price}</p>
-   <button onclick='addCarrinho(${JSON.stringify(p)})' class="bg-[#caa85c] text-black w-full mt-2">Comprar</button>
+   <p class="text-xs mt-1">${p.name}</p>
+   <p class="text-[#caa85c] font-bold">R$ ${p.price}</p>
+
+   <button onclick='addCarrinho(${JSON.stringify(p)})'
+   class="bg-[#caa85c] text-black w-full mt-2 py-1 rounded">
+   Comprar
+   </button>
   </div>`;
  });
 }
 
+// 🔥 PAGINAÇÃO
 function carregarMais(){
  pagina++;
  render();
 }
 
+// 🔥 BUSCA (CORRIGIDA)
 buscaProd.oninput = ()=>{
- const f = buscaProd.value.toLowerCase();
- todos = todos.filter(p=>p.name.toLowerCase().includes(f));
+ const termo = buscaProd.value.toLowerCase();
+
+ todos = todosOriginal.filter(p =>
+  p.name.toLowerCase().includes(termo)
+ );
+
  pagina = 0;
  render();
 }
- const params = new URLSearchParams(window.location.search);
-const add = params.get("add");
 
-if(add){
-  const ids = add.split(",");
+// 🔥 CARREGAR PRODUTOS
+async function carregarProdutos(){
 
-  db.ref('products').once('value', snap=>{
-    snap.forEach(p=>{
-      if(ids.includes(p.key)){
-        addCarrinho({
-          id:p.key,
-          name:p.val().name,
-          price:p.val().price
-        });
-      }
-    });
-  });
-}
+ const snap = await db.ref('products')
+   .orderByChild('category')
+   .equalTo(cat)
+   .once('value');
 
-db.ref('products').orderByChild('category').equalTo(cat).once('value', snap=>{
  todos = [];
- snap.forEach(p=> todos.push({id:p.key,...p.val()}));
+ snap.forEach(p=>{
+  todos.push({id:p.key, ...p.val()});
+ });
+
+ todosOriginal = [...todos];
+
  render();
  atualizarBarra();
-});
+
+ // 🔥 MODO VENDEDOR (AGORA FUNCIONA)
+ const params = new URLSearchParams(window.location.search);
+ const add = params.get("add");
+
+ if(add){
+   const ids = add.split(",");
+
+   todos.forEach(p=>{
+     if(ids.includes(p.id)){
+       addCarrinho(p);
+     }
+   });
+
+   atualizarBarra();
+ }
+}
+
+carregarProdutos();
 </script>
+
 </body>
 </html>
