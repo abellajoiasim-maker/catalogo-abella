@@ -38,6 +38,24 @@ buscaProd.oninput = ()=>{
  pagina = 0;
  render();
 }
+ const params = new URLSearchParams(window.location.search);
+const add = params.get("add");
+
+if(add){
+  const ids = add.split(",");
+
+  db.ref('products').once('value', snap=>{
+    snap.forEach(p=>{
+      if(ids.includes(p.key)){
+        addCarrinho({
+          id:p.key,
+          name:p.val().name,
+          price:p.val().price
+        });
+      }
+    });
+  });
+}
 
 db.ref('products').orderByChild('category').equalTo(cat).once('value', snap=>{
  todos = [];
