@@ -1,7 +1,3 @@
-<!-- ========================= -->
-<!-- /js/app.js -->
-<!-- ========================= -->
-<script>
 let carrinho = JSON.parse(localStorage.getItem('carrinho') || '[]');
 
 function salvarCarrinho(){
@@ -9,17 +5,30 @@ function salvarCarrinho(){
 }
 
 function addCarrinho(prod){
- const item = carrinho.find(i=>i.id===prod.id);
- if(item) item.quantidade++;
- else carrinho.push({...prod, quantidade:1});
+
+ const item = carrinho.find(i => i.id === prod.id);
+
+ if(item){
+  item.quantidade++;
+ } else {
+  carrinho.push({...prod, quantidade:1});
+ }
+
  salvarCarrinho();
  atualizarBarra();
 }
 
+// 🔥 ATUALIZA TOTAL
 function atualizarBarra(){
+
  let total = 0;
- carrinho.forEach(i=> total += i.price * i.quantidade);
+
+ carrinho.forEach(i=>{
+  total += i.price * i.quantidade;
+ });
+
  const el = document.getElementById("totalBar");
- if(el) el.innerText = "R$ " + total.toFixed(2);
+ if(el){
+  el.innerText = "R$ " + total.toFixed(2);
+ }
 }
-</script>
