@@ -1,126 +1,51 @@
+<!-- ========================= -->
+<!-- index.html (CATEGORIAS) -->
+<!-- ========================= -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Abella Joias</title>
-
+<title>Categorias</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-
-<style>
-body{background:#0b0b0b;color:#fff;font-family:Arial}
-.card{background:#141414;border-radius:12px;padding:10px}
-.btn{background:#caa85c;color:#000;padding:8px;border-radius:8px;font-weight:bold}
-</style>
+<script src="js/firebase.js"></script>
 </head>
+<body class="bg-black text-white p-4">
 
-<body class="p-4">
+<h1 class="text-center text-xl text-[#caa85c] mb-4">Categorias</h1>
 
-<h1 class="text-center text-xl mb-2 text-[#caa85c]">ABELLA JOIAS</h1>
+<input id="busca" placeholder="Buscar categoria" class="w-full p-2 mb-4 text-black">
 
-<!-- 🔥 BARRA DE PROGRESSO -->
-<div id="progresso" class="text-center text-sm mb-3 text-yellow-400"></div>
-
-<div id="produtos" class="grid grid-cols-2 gap-3"></div>
-
-<!-- 🔥 TOTAL FIXO -->
-<div class="fixed bottom-0 left-0 right-0 bg-black p-4 border-t border-gray-800">
-  <div class="flex justify-between items-center">
-    <div>
-      <p id="total">R$ 0</p>
-      <p id="economia" class="text-green-400 text-xs"></p>
-    </div>
-    <button onclick="finalizar()" class="bg-[#caa85c] text-black px-4 py-2 rounded-xl font-bold">
-      Finalizar
-    </button>
-  </div>
-</div>
+<div id="cats" class="grid grid-cols-2 gap-3"></div>
 
 <script>
-const firebaseConfig = {
- apiKey: "AIzaSyDPBZSxW8XjtQmDMUknzAyIlFda51MvMJY", 
- databaseURL: "https://catalogo-abella-joias-default-rtdb.firebaseio.com"
-};
+db.ref('categories').on('value', snap=>{
+ let dados = [];
+ snap.forEach(c=> dados.push({id:c.key,...c.val()}));
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-let carrinho = [];
-
-function add(nome,preco){
- carrinho.push({name:nome,price:preco});
- atualizar();
-}
-
-async function atualizar(){
-
- let subtotal = 0;
- carrinho.forEach(i=>subtotal+=i.price);
-
- let desconto = 0;
- let pct = 0;
-
- if(subtotal >= 300){ pct = 5 }
- if(subtotal >= 500){ pct = 10 }
- if(subtotal >= 1000){ pct = 15 }
- if(subtotal >= 2500){ pct = 20 }
-
- desconto = subtotal * (pct/100);
-
- let pix = subtotal >= 300 ? subtotal*0.05 : 0;
-
- let total = subtotal - desconto - pix;
-
- document.getElementById("total").innerText = "R$ " + total.toFixed(2);
- document.getElementById("economia").innerText =
-   `Você economiza R$ ${(desconto+pix).toFixed(2)}`;
-
- // 🔥 PROGRESSO
- if(subtotal < 300){
-   progresso.innerHTML = `Faltam R$ ${(300-subtotal).toFixed(2)} para 5% OFF`;
+ function render(lista){
+  cats.innerHTML="";
+  lista.forEach(cat=>{
+   cats.innerHTML += `
+   <div onclick="abrir('${cat.id}')" class="bg-[#141414] p-3 rounded-xl cursor-pointer">
+   <img src="${cat.image}" class="h-24 w-full object-cover rounded">
+   <p>${cat.name}</p>
+   </div>`;
+  });
  }
- else if(subtotal < 500){
-   progresso.innerHTML = `Faltam R$ ${(500-subtotal).toFixed(2)} para 10% OFF`;
- }
- else if(subtotal < 1000){
-   progresso.innerHTML = `Faltam R$ ${(1000-subtotal).toFixed(2)} para 15% OFF`;
- }
- else if(subtotal < 2500){
-   progresso.innerHTML = `Faltam R$ ${(2500-subtotal).toFixed(2)} para 20% OFF`;
- }
- else{
-   progresso.innerHTML = `🔥 Você atingiu o desconto máximo!`;
- }
-}
 
-db.ref('products').on('value', snap=>{
- produtos.innerHTML="";
- snap.forEach(p=>{
-  const prod=p.val();
+ render(dados);
 
-  produtos.innerHTML+=`
-  <div class="card">
-    <img src="${prod.image}" class="w-full h-32 object-cover rounded">
-    <p>${prod.name}</p>
-    <p class="text-[#caa85c]">R$ ${prod.price}</p>
-    <button class="btn" onclick="add('${prod.name}',${prod.price})">Comprar</button>
-  </div>`;
- })
+ busca.oninput = () =>{
+  const f = busca.value.toLowerCase();
+  render(dados.filter(c=>c.name.toLowerCase().includes(f)));
+ }
 });
 
-function finalizar(){
-
- let msg = "*Pedido Abella Joias*%0A";
-
- carrinho.forEach(i=>{
-  msg += `${i.name} - R$${i.price}%0A`;
- });
-
- window.open("https://wa.me/5519988207658?text="+msg);
+function abrir(id){
+ location.href = "produtos.html?cat="+id;
 }
 </script>
-
 </body>
 </html>
