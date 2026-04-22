@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abella Joias</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+<style>
+body{background:#0b0b0b;color:#fff;font-family:Arial}
+.card{background:#141414;border-radius:12px;padding:10px}
+.btn{background:#caa85c;color:#000;padding:8px;border-radius:8px;font-weight:bold}
+</style>
+
+</head>
+
+<body class="p-4">
+
+<h1 class="text-center text-xl mb-4 text-[#caa85c]">ABELLA JOIAS</h1>
+
+<div id="produtos" class="grid grid-cols-2 gap-3"></div>
+
+<a href="#" onclick="verCarrinho()" class="fixed bottom-4 right-4 bg-[#caa85c] text-black px-4 py-3 rounded-xl font-bold">
+Carrinho
+</a>
+
+<script>
+const firebaseConfig = {
+ apiKey: "SUA_API_KEY",
+ databaseURL: "https://catalogo-abella-joias-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let carrinho = [];
+
+function add(nome,preco){
+ carrinho.push({name:nome,price:preco});
+ alert("Adicionado!");
+}
+
+db.ref('products').on('value', snap=>{
+ produtos.innerHTML="";
+ snap.forEach(p=>{
+  const prod=p.val();
+  produtos.innerHTML+=`
+  <div class="card">
+    <img src="${prod.image}" class="w-full h-32 object-cover rounded">
+    <p>${prod.name}</p>
+    <p>R$ ${prod.price}</p>
+    <button class="btn" onclick="add('${prod.name}',${prod.price})">Comprar</button>
+  </div>`;
+ })
+});
+
+function verCarrinho(){
+ let msg="*Pedido Abella*%0A";
+ carrinho.forEach(i=>{
+  msg+=`${i.name} - R$${i.price}%0A`;
+ });
+ window.open("https://wa.me/5519988207658?text="+msg);
+}
+</script>
+
+</body>
+</html>
