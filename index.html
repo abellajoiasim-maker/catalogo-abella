@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Abella Joias</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
@@ -13,134 +14,87 @@
 <script src="js/app.js"></script>
 
 <style>
-body{background:#0b0b0b;color:#fff;font-family:Arial}
-.cat-card{
-  border-radius:16px;
-  overflow:hidden;
-  position:relative;
-  cursor:pointer;
-}
-.cat-card img{
-  width:100%;
-  height:140px;
-  object-fit:cover;
-}
+body{background:#0b0b0b;color:#fff}
+.cat{border-radius:16px;overflow:hidden;position:relative}
 .overlay{
-  position:absolute;
-  bottom:0;
-  width:100%;
-  background:linear-gradient(transparent, rgba(0,0,0,0.9));
-  padding:8px;
-  text-align:center;
+ position:absolute;
+ bottom:0;
+ width:100%;
+ background:linear-gradient(transparent, rgba(0,0,0,0.9));
+ text-align:center;
+ padding:6px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🔥 HEADER -->
-<div class="fixed top-0 left-0 right-0 bg-black p-3 flex justify-between items-center border-b border-gray-800 z-50">
-  <span class="text-[#caa85c] font-bold">ABELLA</span>
+<!-- HEADER -->
+<div class="fixed top-0 left-0 right-0 bg-black p-3 flex justify-between border-b z-50">
+ <span class="text-[#caa85c] font-bold">ABELLA</span>
 
-  <div class="flex gap-2">
-    <a href="galvanicas.html" class="text-xs bg-[#222] px-3 py-1 rounded">🏭</a>
-    <a href="carrinho.html" class="text-xs bg-[#caa85c] text-black px-3 py-1 rounded font-bold">
-      🛒 <span id="totalBar">0</span>
-    </a>
-  </div>
+ <div class="flex gap-2">
+  <a href="galvanicas.html" class="bg-[#222] px-3 py-1 rounded text-xs">🏭</a>
+  <a href="carrinho.html" class="bg-[#caa85c] text-black px-3 py-1 rounded text-xs">
+    🛒 <span id="totalBar">0</span>
+  </a>
+ </div>
 </div>
 
-<div class="pt-16 px-3">
+<div class="pt-16 p-3">
 
-<!-- 🔥 BANNER -->
+<!-- BANNER -->
 <div class="bg-[#caa85c] text-black p-3 rounded-xl text-center mb-3">
-  <p class="text-sm font-bold">💎 ATÉ 20% OFF + 5% NO PIX</p>
-  <p class="text-xs">Quanto mais você compra, mais economiza</p>
+ 💎 ATÉ 20% OFF + 5% PIX
 </div>
 
-<!-- 🔥 PROGRESSO -->
-<div id="progresso" class="text-center text-yellow-400 text-sm mb-3"></div>
+<!-- PROGRESSO -->
+<div id="progresso" class="text-yellow-400 text-center mb-3 text-sm"></div>
 
-<!-- 🔍 BUSCA -->
-<input 
-id="busca"
-placeholder="Buscar categoria..."
-class="w-full p-3 mb-3 rounded-xl text-black"
-/>
+<!-- BUSCA -->
+<input id="busca" placeholder="Buscar categoria..."
+class="w-full p-2 rounded mb-3 text-black">
 
-<!-- 📦 CATEGORIAS -->
+<!-- CATEGORIAS -->
 <div id="cats" class="grid grid-cols-2 gap-3"></div>
 
 </div>
 
-<!-- 💬 WHATS -->
-<a href="https://wa.me/5519988207658"
-class="fixed bottom-4 left-4 bg-green-500 px-4 py-3 rounded-full shadow-lg">
-💬
-</a>
-
 <script>
-let listaCategorias = [];
-let carrinho = JSON.parse(localStorage.getItem('carrinho')||'[]');
+let categorias=[];
 
-function atualizarBarra(){
- let total=0;
- carrinho.forEach(i=> total+= i.price*i.quantidade);
- document.getElementById("totalBar").innerText = "R$ "+total.toFixed(0);
-
- // 🔥 PROGRESSO
- if(total < 300){
-   progresso.innerHTML = `Faltam R$ ${(300-total).toFixed(0)} para 5% OFF`;
- }
- else if(total < 500){
-   progresso.innerHTML = `Faltam R$ ${(500-total).toFixed(0)} para 10% OFF`;
- }
- else if(total < 1000){
-   progresso.innerHTML = `Faltam R$ ${(1000-total).toFixed(0)} para 15% OFF`;
- }
- else if(total < 2500){
-   progresso.innerHTML = `Faltam R$ ${(2500-total).toFixed(0)} para 20% OFF`;
- }
- else{
-   progresso.innerHTML = `🔥 Você atingiu o desconto máximo!`;
- }
-}
-
-db.ref('categories').on('value', snap => {
-  listaCategorias = [];
-
-  snap.forEach(c => {
-    listaCategorias.push({ id:c.key, ...c.val() });
-  });
-
-  render(listaCategorias);
+db.ref('categories').on('value', snap=>{
+ categorias=[];
+ snap.forEach(c=> categorias.push({id:c.key,...c.val()}));
+ render(categorias);
 });
 
 function render(lista){
-  cats.innerHTML = "";
-
-  lista.forEach(cat => {
-    cats.innerHTML += `
-    <div onclick="abrir('${cat.id}')" class="cat-card">
-      <img src="${cat.image}">
-      <div class="overlay">
-        <p class="text-sm font-bold">${cat.name}</p>
-      </div>
-    </div>
-    `;
-  });
+ cats.innerHTML="";
+ lista.forEach(cat=>{
+  cats.innerHTML+=`
+  <div onclick="abrir('${cat.id}')" class="cat">
+   <img src="${cat.image}" class="w-full h-32 object-cover">
+   <div class="overlay">${cat.name}</div>
+  </div>`;
+ });
 }
 
-busca.oninput = () => {
-  const termo = busca.value.toLowerCase();
-
-  render(listaCategorias.filter(c =>
-    c.name.toLowerCase().includes(termo)
-  ));
-};
+busca.oninput=()=>{
+ const t=busca.value.toLowerCase();
+ render(categorias.filter(c=>c.name.toLowerCase().includes(t)));
+}
 
 function abrir(id){
-  window.location.href = "produtos.html?cat=" + id;
+ location.href="produtos.html?cat="+id;
+}
+
+// progresso
+const {subtotal}=calcularTotal();
+if(subtotal<300){
+ progresso.innerHTML=`Faltam R$ ${300-subtotal} para 5%`;
+}else{
+ progresso.innerHTML="🔥 Você já está com desconto ativo!";
 }
 
 atualizarBarra();
