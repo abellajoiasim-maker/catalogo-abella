@@ -1,52 +1,78 @@
-<!-- ========================= -->
-<!-- carrinho.html -->
-<!-- ========================= -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Carrinho</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="js/app.js"></script>
-</head>
-<body class="bg-black text-white p-4">
 
-<h1 class="text-[#caa85c]">Carrinho</h1>
+<style>
+body{background:#0b0b0b;color:#fff;font-family:Arial}
+</style>
+</head>
+
+<body class="p-4">
+
+<h1 class="text-[#caa85c] mb-3">Carrinho</h1>
 
 <div id="lista"></div>
-<div id="resumo"></div>
+<div id="resumo" class="mt-4"></div>
 
-<button onclick="finalizar()" class="bg-[#caa85c] text-black w-full p-3 mt-4">Finalizar WhatsApp</button>
+<button onclick="finalizar()"
+class="bg-[#caa85c] text-black w-full p-3 mt-4 rounded">
+Finalizar no WhatsApp
+</button>
 
 <script>
 function render(){
- lista.innerHTML="";
- let subtotal=0;
+
+ lista.innerHTML = "";
+
+ let subtotal = 0;
 
  carrinho.forEach(i=>{
   subtotal += i.price * i.quantidade;
-  lista.innerHTML += `<p>${i.quantidade}x ${i.name}</p>`;
+
+  lista.innerHTML += `
+  <div class="mb-2">
+    ${i.quantidade}x ${i.name}
+  </div>`;
  });
 
- let pct = subtotal>=2500?20: subtotal>=1000?15: subtotal>=500?10: subtotal>=300?5:0;
- let desc = subtotal*(pct/100);
- let pix = subtotal>=300 ? subtotal*0.05:0;
+ let pct =
+ subtotal>=2500?20:
+ subtotal>=1000?15:
+ subtotal>=500?10:
+ subtotal>=300?5:0;
+
+ let desc = subtotal * (pct/100);
+ let pix = subtotal>=300 ? subtotal*0.05 : 0;
+
  let total = subtotal - desc - pix;
 
  resumo.innerHTML = `
- <p>Subtotal: ${subtotal.toFixed(2)}</p>
- <p>Desconto: ${desc.toFixed(2)}</p>
- <p>PIX: ${pix.toFixed(2)}</p>
- <h2>Total: ${total.toFixed(2)}</h2>`;
+ <p>Subtotal: R$ ${subtotal.toFixed(2)}</p>
+ <p>Desconto: -R$ ${desc.toFixed(2)}</p>
+ <p>PIX: -R$ ${pix.toFixed(2)}</p>
+ <h2 class="text-[#caa85c] font-bold mt-2">
+ Total: R$ ${total.toFixed(2)}
+ </h2>`;
 }
 
 function finalizar(){
- let msg="Pedido Abella:%0A";
- carrinho.forEach(i=> msg += `${i.name}%0A`);
+
+ let msg = "*Pedido Abella Joias*%0A";
+
+ carrinho.forEach(i=>{
+  msg += `${i.quantidade}x ${i.name}%0A`;
+ });
+
  window.open("https://wa.me/5519988207658?text="+msg);
 }
 
 render();
 </script>
+
 </body>
 </html>
