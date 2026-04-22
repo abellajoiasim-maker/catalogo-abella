@@ -1,51 +1,105 @@
-<!-- ========================= -->
-<!-- index.html (CATEGORIAS) -->
-<!-- ========================= -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Categorias</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abella Joias</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
 <script src="js/firebase.js"></script>
+<script src="js/app.js"></script>
+
+<style>
+body { background:#0b0b0b; color:#fff; font-family:Arial; }
+.card {
+  background:#141414;
+  border-radius:14px;
+  overflow:hidden;
+  cursor:pointer;
+  transition:0.2s;
+}
+.card:hover { transform:scale(1.03); }
+</style>
 </head>
-<body class="bg-black text-white p-4">
 
-<h1 class="text-center text-xl text-[#caa85c] mb-4">Categorias</h1>
+<body class="p-4">
 
-<input id="busca" placeholder="Buscar categoria" class="w-full p-2 mb-4 text-black">
+<!-- 🔥 TOPO -->
+<div class="flex justify-between items-center mb-4">
+  <h1 class="text-lg text-[#caa85c] font-bold">ABELLA JOIAS</h1>
 
+  <div class="flex gap-2">
+    <a href="galvanicas.html" class="bg-[#222] px-3 py-2 rounded-lg text-sm">
+      Galvânicas
+    </a>
+
+    <a href="carrinho.html" class="bg-[#caa85c] text-black px-3 py-2 rounded-lg font-bold">
+      🛒 <span id="totalBar">R$ 0</span>
+    </a>
+  </div>
+</div>
+
+<!-- 🔍 BUSCA -->
+<input 
+  id="busca" 
+  placeholder="Buscar categoria..." 
+  class="w-full p-2 mb-4 rounded-lg text-black"
+/>
+
+<!-- 📦 CATEGORIAS -->
 <div id="cats" class="grid grid-cols-2 gap-3"></div>
 
 <script>
-db.ref('categories').on('value', snap=>{
- let dados = [];
- snap.forEach(c=> dados.push({id:c.key,...c.val()}));
+let listaCategorias = [];
 
- function render(lista){
-  cats.innerHTML="";
-  lista.forEach(cat=>{
-   cats.innerHTML += `
-   <div onclick="abrir('${cat.id}')" class="bg-[#141414] p-3 rounded-xl cursor-pointer">
-   <img src="${cat.image}" class="h-24 w-full object-cover rounded">
-   <p>${cat.name}</p>
-   </div>`;
+db.ref('categories').on('value', snap => {
+  listaCategorias = [];
+
+  snap.forEach(c => {
+    listaCategorias.push({
+      id: c.key,
+      ...c.val()
+    });
   });
- }
 
- render(dados);
-
- busca.oninput = () =>{
-  const f = busca.value.toLowerCase();
-  render(dados.filter(c=>c.name.toLowerCase().includes(f)));
- }
+  render(listaCategorias);
 });
 
-function abrir(id){
- location.href = "produtos.html?cat="+id;
+function render(lista){
+  cats.innerHTML = "";
+
+  lista.forEach(cat => {
+    cats.innerHTML += `
+      <div class="card" onclick="abrir('${cat.id}')">
+        <img src="${cat.image}" class="w-full h-28 object-cover">
+        <div class="p-2 text-center">
+          <p class="text-sm">${cat.name}</p>
+        </div>
+      </div>
+    `;
+  });
 }
+
+busca.oninput = () => {
+  const termo = busca.value.toLowerCase();
+
+  const filtrado = listaCategorias.filter(c =>
+    c.name.toLowerCase().includes(termo)
+  );
+
+  render(filtrado);
+};
+
+function abrir(id){
+  window.location.href = "produtos.html?cat=" + id;
+}
+
+// 🔥 atualiza valor carrinho
+atualizarBarra();
 </script>
+
 </body>
 </html>
