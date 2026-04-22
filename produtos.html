@@ -1,1 +1,50 @@
+<!-- ========================= -->
+ <span id="totalBar">R$ 0</span>
+ <a href="carrinho.html" class="bg-[#caa85c] text-black px-3 py-2 rounded">Carrinho</a>
+</div>
 
+<script>
+const url = new URLSearchParams(location.search);
+const cat = url.get("cat");
+
+let todos = [];
+let pagina = 0;
+const limite = 20;
+
+function render(){
+ produtos.innerHTML="";
+ const inicio = pagina * limite;
+ const lista = todos.slice(0, inicio + limite);
+
+ lista.forEach(p=>{
+  produtos.innerHTML += `
+  <div class="bg-[#141414] p-3 rounded-xl">
+   <img src="${p.image}" class="h-32 w-full object-cover rounded">
+   <p>${p.name}</p>
+   <p class="text-[#caa85c]">R$ ${p.price}</p>
+   <button onclick='addCarrinho(${JSON.stringify(p)})' class="bg-[#caa85c] text-black w-full mt-2">Comprar</button>
+  </div>`;
+ });
+}
+
+function carregarMais(){
+ pagina++;
+ render();
+}
+
+buscaProd.oninput = ()=>{
+ const f = buscaProd.value.toLowerCase();
+ todos = todos.filter(p=>p.name.toLowerCase().includes(f));
+ pagina = 0;
+ render();
+}
+
+db.ref('products').orderByChild('category').equalTo(cat).once('value', snap=>{
+ todos = [];
+ snap.forEach(p=> todos.push({id:p.key,...p.val()}));
+ render();
+ atualizarBarra();
+});
+</script>
+</body>
+</html>
