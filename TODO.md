@@ -5,3 +5,4 @@
 - [ ] **Simplificar adição sem remover regras comerciais.** Produto sem variação pode ser adicionado pelo card rápido, respeitando estoque e regras atuais. Produto com variações permanece no modal de grade já existente.
 - [ ] **Adaptar interação para desktop, tablet e mobile.** Controles de navegação e adição são utilizáveis por toque, o resumo fixo da sacola aparece somente na Compra rápida e exibe contagem/total atuais com ligação à sacola existente.
 - [ ] **Entregar roteiro para teste isolado.** A documentação explica branch/repositório de teste, risco do domínio `CNAME`, proteção de credenciais e uso de Firebase de homologação para evitar gravar pedidos de teste no banco real.
+- [ ] **Permitir continuar comprando na sacola e no checkout.** Exibir um botão “Continuar comprando” nas duas páginas, levando ao catálogo em Compra rápida sem esvaziar a sacola; oferecer o mesmo caminho quando a sacola estiver vazia.
