@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <script src="./js/analytics.js"></script>
+    <title>Sacola • Abella Joias</title>
+    <meta name="description" content="Sacola de compras da Abella Joias.">
+    <meta name="robots" content="noindex, nofollow">
+
+    <script>window.AURORA_FALLBACK_IMAGE = 'https://cdn.jsdelivr.net/gh/abellajoiasim-maker/abella-joias-cdn@main/settings/placeholder.webp';</script>
+
+    <!-- Firebase SDK: necessário no carrinho para carregar as regras de descontos -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+    <link rel="stylesheet" href="components/index.css">
+    <style>
+        .cart-item{
+            display: grid; grid-template-columns: 88px 1fr auto; gap: var(--space-5);
+            align-items: center; padding: var(--space-5) 0; border-bottom: 1px solid var(--color-border);
+        }
+        .cart-item .thumb{ width:88px; height:88px; border-radius: var(--radius-md); overflow:hidden; background: var(--color-bg); }
+        .cart-item .thumb img{ width:100%; height:100%; object-fit:cover; }
+        .qty-control{ display:flex; align-items:center; gap: var(--space-3); margin-top: var(--space-2); }
+        .qty-btn{
+            width:28px; height:28px; border-radius:50%; border:1px solid var(--color-border);
+            background:var(--color-surface); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;
+        }
+        .qty-btn:hover{ border-color: var(--color-primary); }
+        .qty-input{
+            width: 56px; height: 28px; text-align: center; padding: 0 !important;
+            font-size: 13px; -moz-appearance: textfield;
+        }
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+        .summary-row{ display:flex; justify-content:space-between; font-size:14px; padding-block: var(--space-2); color: var(--color-secondary); }
+        .summary-total{ display:flex; justify-content:space-between; font-family: var(--font-heading); font-size:22px; padding-top: var(--space-4); margin-top: var(--space-3); border-top: 1px solid var(--color-border); }
+        .empty-cart{ text-align:center; padding: var(--space-10) var(--space-5); }
+        .cart-promo-alert{
+            display:none; margin:0 0 var(--space-4); padding:var(--space-4);
+            border-radius:var(--radius-md);
+            background:linear-gradient(135deg, rgba(var(--color-primary-rgb),.13), rgba(var(--color-primary-rgb),.04));
+            border:1px solid var(--color-primary); box-shadow:0 4px 16px rgba(0,0,0,.05);
+            font-size:13px; line-height:1.5;
+        }
+        .cart-promo-alert strong{ color:var(--color-primary); }
+        .cart-promo-alert .promo-progress{ display:block; height:6px; margin-top:8px; border-radius:999px; background:rgba(var(--color-primary-rgb),.12); overflow:hidden; }
+        .cart-promo-alert .promo-progress > span{ display:block; height:100%; width:0; border-radius:inherit; background:var(--color-primary); transition:width .25s ease; }
+    </style>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/abellajoiasim-maker/abella-joias-cdn@main/home/logo.webp" type="image/webp">
+</head>
+<body>
+
+    <div class="aurora-header">
+        <div class="bar aurora-container">
+            <nav class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="./galvanicas.html">Galvânicas</a>
+            </nav>
+            <div class="brand">
+                <div class="brand-logo" id="abellaLogoContainer">
+                    <span id="abellaLogoFallback" style="font-family:var(--font-heading); font-weight:600;">A</span>
+                    <img id="abellaLogoImg" src="" alt="Abella Joias" style="width:100%;height:100%;object-fit:contain;display:none;">
+                </div>
+                <div><p class="brand-name">Abella</p></div>
+            </div>
+            <div class="actions">
+                <a href="carrinho.html" class="cart-btn"><span id="cart-count">0</span></a>
+            </div>
+        </div>
+    </div>
+
+    <main class="aurora-container" style="max-width: 900px;">
+        <div id="breadcrumb-slot"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin: var(--space-5) 0 var(--space-6);">
+            <div style="display:flex; align-items:center; gap: var(--space-4);">
+                <button onclick="window.history.back()" class="aurora-btn aurora-btn--ghost aurora-btn--sm">← Voltar</button>
+                <h1 style="font-size:clamp(24px,4vw,36px);">Sua Sacola</h1>
+            </div>
+            <button class="aurora-btn aurora-btn--ghost aurora-btn--sm" id="btnLimpar">Limpar sacola</button>
+        </div>
+
+        <div id="banner-compartilhada" class="hidden" style="background:rgba(var(--color-primary-rgb),.08); border:1px solid var(--color-border); border-radius:var(--radius-md); padding: var(--space-4) var(--space-5); margin-bottom: var(--space-5); font-size:13px;">
+            <strong>🔗 Sacola compartilhada</strong>
+            <p id="bannerCompartilhadaTexto" style="margin-top:var(--space-2); color:var(--color-secondary);"></p>
+        </div>
+
+        <div id="lista-itens"></div>
+
+        <div id="empty-cart" class="empty-cart hidden">
+            <p style="font-size:15px; color:var(--color-secondary); margin-bottom: var(--space-5);">Sua sacola está vazia.</p>
+            <a href="index.html" class="aurora-btn aurora-btn--primary">Ver Coleções</a>
+        </div>
+
+        <div id="resumo" class="aurora-section" style="padding-top: var(--space-6); max-width: 380px; margin-left: auto;">
+            <div id="cupomBox" style="margin-bottom: var(--space-5);">
+                <div id="cupomForm" style="display:flex; gap: var(--space-2);">
+                    <input type="text" id="inputCupom" placeholder="Código do cupom" class="aurora-input" style="text-transform:uppercase; flex:1;">
+                    <button class="aurora-btn aurora-btn--outline aurora-btn--sm" id="btnAplicarCupom">Aplicar</button>
+                </div>
+                <p id="cupomMsg" style="font-size:11px; margin-top: var(--space-2);"></p>
+                <div id="cupomAplicadoBox" class="hidden" style="display:flex; align-items:center; justify-content:space-between; background:rgba(var(--color-primary-rgb),.08); border:1px solid var(--color-border); border-radius:var(--radius-md); padding: var(--space-3) var(--space-4);">
+                    <span style="font-size:12px; font-weight:600;">🏷️ Cupom <strong id="cupomCodigoAplicado"></strong> aplicado</span>
+                    <button id="btnRemoverCupom" style="font-size:11px; color:var(--color-danger); background:none; border:none; cursor:pointer;">Remover</button>
+                </div>
+            </div>
+            <div id="alertaProgressoFaixa" class="cart-promo-alert">
+                <div id="alertaProgressoFaixaTexto"></div>
+                <span class="promo-progress"><span id="alertaProgressoFaixaBarra"></span></span>
+            </div>
+            <div class="summary-row"><span>Subtotal</span><span id="subtotal">R$ 0,00</span></div>
+            <div class="summary-row" id="linhaDesconto" style="display:none;"><span>Desconto</span><span id="descontoValor" style="color:var(--color-success);"></span></div>
+            <div class="summary-row" id="linhaDescontoFaixa" style="display:none;"><span id="labelFaixa">Desconto por valor</span><span id="descontoFaixaValor" style="color:var(--color-success);"></span></div>
+            <div class="summary-row" id="linhaDescontoCupom" style="display:none;"><span>Cupom</span><span id="descontoCupomValor" style="color:var(--color-success);"></span></div>
+            <div class="summary-total"><span>Total</span><span id="total">R$ 0,00</span></div>
+            <a href="checkout.html" id="btnFinalizarSacola" class="aurora-btn aurora-btn--primary aurora-btn--block" style="margin-top: var(--space-5);">Finalizar Pedido</a>
+            <div id="acoesSacola" style="display:flex; flex-direction:column; gap: var(--space-2); margin-top: var(--space-3);">
+                <button type="button" id="btnWhatsSacola" class="aurora-btn aurora-btn--outline aurora-btn--block">💬 Enviar minha sacola para a Abella</button>
+                <button type="button" id="btnCompartilharSacola" class="aurora-btn aurora-btn--ghost aurora-btn--block">🔗 Copiar link da sacola</button>
+                <p id="msgCompartilhar" style="font-size:11px; color:var(--color-secondary); text-align:center; min-height:14px;"></p>
+            </div>
+        </div>
+    </main>
+
+
+    <div id="modalContatoSacola" class="hidden" style="position:fixed; inset:0; background:rgba(0,0,0,.65); z-index:9999; display:none; align-items:center; justify-content:center; padding:var(--space-5);">
+        <div style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-6); width:100%; max-width:380px;">
+            <h2 style="font-family:var(--font-heading); font-size:20px; margin-bottom:var(--space-2);">Enviar minha sacola</h2>
+            <p style="font-size:12px; color:var(--color-secondary); margin-bottom:var(--space-4);">Informe seu contato para a Abella retornar com sua sacola.</p>
+            <input type="text" id="contatoNome" class="aurora-input" placeholder="Seu nome" autocomplete="name" style="margin-bottom:var(--space-3);">
+            <input type="tel" id="contatoWhats" class="aurora-input" placeholder="Seu WhatsApp com DDD (19) 99999-9999" autocomplete="tel">
+            <p id="contatoErro" style="font-size:11px; color:var(--color-danger); min-height:14px; margin-top:var(--space-2);"></p>
+            <div style="display:flex; gap:var(--space-2); margin-top:var(--space-3);">
+                <button type="button" id="btnContatoCancelar" class="aurora-btn aurora-btn--ghost" style="flex:1;">Cancelar</button>
+                <button type="button" id="btnContatoEnviar" class="aurora-btn aurora-btn--primary" style="flex:2;">Enviar pelo WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="aurora-footer">
+        <div class="aurora-container">
+            <div class="bottom">
+                <span>© Abella Joias — atacado de joias no bruto</span>
+                <a href="index.html" style="color:var(--color-secondary);">← Continuar comprando</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="./js/firebase/firebase-config.js"></script>
+    <script src="./js/utils/money.js"></script>
+    <script src="./js/utils/peso.js"></script>
+    <script src="./js/utils/storage.js"></script>
+    <script src="./js/services/configService.js"></script>
+    <script src="./js/services/descontoService.js"></script>
+    <script src="./js/services/cupomService.js"></script>
+    <script src="./js/services/carrinhoService.js"></script>
+    <script src="./js/utils/image-helper.js"></script>
+
+    <script src="engine/render.js"></script>
+    <script src="engine/animations.js"></script>
+    <script src="engine/mobile-nav.js"></script>
+
+    <script>
+        function formatarMoeda(valor) {
+            return window.MoneyUtils?.format ? window.MoneyUtils.format(valor) : `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
+        }
+
+        function renderizarCarrinho() {
+            const lista = document.getElementById('lista-itens');
+            const empty = document.getElementById('empty-cart');
+            const resumo = document.getElementById('resumo');
+            const cartCountEl = document.getElementById('cart-count');
+
+            if (!window.carrinhoService) {
+                lista.innerHTML = `<p style="color:var(--color-danger);font-size:13px;">⚠️ Serviço de carrinho indisponível.</p>`;
+                return;
+            }
+
+            const itens = carrinhoService.listar();
+            cartCountEl.innerText = carrinhoService.obterContagem();
+
+            if (itens.length === 0) {
+                lista.innerHTML = '';
+                empty.classList.remove('hidden');
+                resumo.classList.add('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            resumo.classList.remove('hidden');
+
+            lista.innerHTML = itens.map(item => {
+                const img = (typeof resolverImagemFirebase !== 'undefined' && item.image) ? resolverImagemFirebase(item.image) : (item.image || window.AURORA_FALLBACK_IMAGE);
+                const precoUnit = formatarMoeda(item.precoVendaUnitario);
+                const precoTotalItem = formatarMoeda(item.precoVendaUnitario * item.quantidade);
+                const badge = item.possuiDesconto && item.badgePromocional
+                    ? `<span class="aurora-badge aurora-badge--pix" style="margin-left:var(--space-2);">${item.badgePromocional}</span>` : '';
+
+                return `
+                    <div class="cart-item">
+                        <div class="thumb"><img src="${img}" alt="${item.name}" onerror="this.onerror=null;this.src='${window.AURORA_FALLBACK_IMAGE}'"></div>
+                        <div>
+                            <p style="font-family:var(--font-heading); font-size:17px;">${item.name} ${badge}</p>
+                            ${item.variacao ? `<p style="font-size:12px; color:var(--color-secondary); margin-top:var(--space-1);">Variação: ${item.variacao}</p>` : ''}
+                            <div class="qty-control">
+                                <button class="qty-btn" onclick="alterarQuantidade('${item.id}', '${item.variacao || ''}', ${item.quantidade - 1})">−</button>
+                                <input type="number" class="aurora-input qty-input" min="1" value="${item.quantidade}"
+                                       onchange="alterarQuantidade('${item.id}', '${item.variacao || ''}', parseInt(this.value) || 1)"
+                                       onkeydown="if(event.key==='Enter'){this.blur();}">
+                                <button class="qty-btn" onclick="alterarQuantidade('${item.id}', '${item.variacao || ''}', ${item.quantidade + 1})">+</button>
+                                <button style="font-size:11px; color:var(--color-danger); background:none; border:none; cursor:pointer; margin-left:var(--space-3);" onclick="removerItem('${item.id}', '${item.variacao || ''}')">Remover</button>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <p class="aurora-price" style="font-size:16px;">${precoTotalItem}</p>
+                            <p style="font-size:11px; color:var(--color-secondary);">${precoUnit} /un.</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const subtotal = carrinhoService.obterTotalBruto();
+            const total = carrinhoService.obterTotal();
+            const descontoCategoria = itens.reduce((acc, item) => {
+                const bruto = (parseFloat(item.preco) || 0) * item.quantidade;
+                const comDesconto = item.precoVendaUnitario * item.quantidade;
+                return acc + (bruto - comDesconto);
+            }, 0);
+            const descontoCupom = carrinhoService.obterDescontoCupom();
+
+            document.getElementById('subtotal').innerText = formatarMoeda(subtotal);
+            document.getElementById('total').innerText = formatarMoeda(total);
+
+            const linhaDesconto = document.getElementById('linhaDesconto');
+            if (descontoCategoria > 0.001) {
+                linhaDesconto.style.display = 'flex';
+                document.getElementById('descontoValor').innerText = `− ${formatarMoeda(descontoCategoria)}`;
+            } else {
+                linhaDesconto.style.display = 'none';
+            }
+
+            const linhaDescontoCupom = document.getElementById('linhaDescontoCupom');
+            const cupomAplicado = carrinhoService.obterCupomAplicado();
+            if (cupomAplicado && descontoCupom > 0.001) {
+                linhaDescontoCupom.style.display = 'flex';
+                document.getElementById('descontoCupomValor').innerText = `− ${formatarMoeda(descontoCupom)}`;
+            } else {
+                linhaDescontoCupom.style.display = 'none';
+            }
+
+            const descontoFaixa = carrinhoService.obterDescontoFaixaValor();
+            const faixaAplicada = carrinhoService.obterFaixaValorAplicada();
+            const progressoFaixa = carrinhoService.obterProgressoFaixaValor();
+            const alertaFaixa = document.getElementById('alertaProgressoFaixa');
+            const alertaFaixaTexto = document.getElementById('alertaProgressoFaixaTexto');
+            const alertaFaixaBarra = document.getElementById('alertaProgressoFaixaBarra');
+
+            if (alertaFaixa && progressoFaixa?.temFaixas && progressoFaixa.mensagem) {
+                alertaFaixa.style.display = 'block';
+                if (alertaFaixaTexto) alertaFaixaTexto.innerHTML = progressoFaixa.mensagem;
+
+                // Mostra visualmente o avanço em direção à próxima faixa.
+                const faixaAnterior = progressoFaixa.faixaAtual?.valorMinimo || 0;
+                const proxima = progressoFaixa.proximaFaixa?.valorMinimo || 0;
+                const subtotalParaMeta = carrinhoService.listar().reduce((total, item) => {
+                    return total + ((Number(item.precoVendaUnitario) || 0) * (parseInt(item.quantidade) || 0));
+                }, 0);
+                let progressoPercentual = 100;
+                if (proxima > faixaAnterior) {
+                    progressoPercentual = Math.max(0, Math.min(100, ((subtotalParaMeta - faixaAnterior) / (proxima - faixaAnterior)) * 100));
+                }
+                if (alertaFaixaBarra) alertaFaixaBarra.style.width = `${progressoPercentual}%`;
+            } else if (alertaFaixa) {
+                alertaFaixa.style.display = 'none';
+                if (alertaFaixaTexto) alertaFaixaTexto.innerHTML = '';
+                if (alertaFaixaBarra) alertaFaixaBarra.style.width = '0%';
+            }
+
+            const linhaDescontoFaixa = document.getElementById('linhaDescontoFaixa');
+            if (faixaAplicada && descontoFaixa > 0.001) {
+                linhaDescontoFaixa.style.display = 'flex';
+                document.getElementById('labelFaixa').innerText = `Desconto (compra acima de ${formatarMoeda(faixaAplicada.valorMinimo)})`;
+                document.getElementById('descontoFaixaValor').innerText = `− ${formatarMoeda(descontoFaixa)}`;
+            } else {
+                linhaDescontoFaixa.style.display = 'none';
+            }
+
+            if (cupomAplicado) {
+                document.getElementById('cupomForm').classList.add('hidden');
+                document.getElementById('cupomAplicadoBox').classList.remove('hidden');
+                document.getElementById('cupomAplicadoBox').style.display = 'flex';
+                document.getElementById('cupomCodigoAplicado').innerText = cupomAplicado.code;
+            } else {
+                document.getElementById('cupomForm').classList.remove('hidden');
+                document.getElementById('cupomAplicadoBox').classList.add('hidden');
+                document.getElementById('cupomAplicadoBox').style.display = 'none';
+            }
+        }
+
+
+        // ------------------------------------------------------------------
+        // Sacola compartilhada: link + WhatsApp
+        // ------------------------------------------------------------------
+        let _cfgLoja = null;
+        async function obterConfigLoja() {
+            if (_cfgLoja) return _cfgLoja;
+            try {
+                const snap = await db.ref('abella/settings').once('value');
+                _cfgLoja = snap && snap.exists() ? snap.val() : {};
+            } catch (e) { _cfgLoja = {}; }
+            return _cfgLoja;
+        }
+
+        function mostrarMsgCompartilhar(texto) {
+            const el = document.getElementById('msgCompartilhar');
+            if (!el) return;
+            el.innerText = texto;
+            setTimeout(() => { if (el.innerText === texto) el.innerText = ''; }, 4000);
+        }
+
+        async function copiarLinkSacola() {
+            const link = carrinhoService.gerarLinkCompartilhavel();
+            if (!link) { mostrarMsgCompartilhar('Sua sacola está vazia.'); return; }
+            try {
+                if (navigator.share && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+                    await navigator.share({ title: 'Minha sacola — Abella Joias', url: link });
+                    return;
+                }
+                await navigator.clipboard.writeText(link);
+                mostrarMsgCompartilhar('✅ Link copiado! Cole onde quiser enviar.');
+            } catch (e) {
+                if (e && e.name === 'AbortError') return;
+                window.prompt('Copie o link da sacola:', link);
+            }
+        }
+
+        const CHAVE_CONTATO = 'abella_contato_sacola';
+
+        function somenteDigitos(v) { return String(v || '').replace(/\D/g, ''); }
+
+        function whatsComDDI(digitos) {
+            // 10/11 dígitos = DDD + número (Brasil) → acrescenta 55
+            return (digitos.length === 10 || digitos.length === 11) ? '55' + digitos : digitos;
+        }
+
+        function abrirModalContato() {
+            const itens = carrinhoService.listar();
+            if (!itens.length) { mostrarMsgCompartilhar('Sua sacola está vazia.'); return; }
+            try {
+                const salvo = JSON.parse(localStorage.getItem(CHAVE_CONTATO) || '{}');
+                if (salvo.nome) document.getElementById('contatoNome').value = salvo.nome;
+                if (salvo.whats) document.getElementById('contatoWhats').value = salvo.whats;
+            } catch (e) {}
+            document.getElementById('contatoErro').innerText = '';
+            const m = document.getElementById('modalContatoSacola');
+            m.classList.remove('hidden');
+            m.style.display = 'flex';
+            document.getElementById(document.getElementById('contatoNome').value ? 'contatoWhats' : 'contatoNome').focus();
+        }
+
+        function fecharModalContato() {
+            const m = document.getElementById('modalContatoSacola');
+            m.classList.add('hidden');
+            m.style.display = 'none';
+        }
+
+        // Grava a sacola em abella/orders com status "Sacola". O id é fixo por
+        // WhatsApp (SAC-<numero>): se o cliente reenviar, atualiza em vez de duplicar.
+        async function salvarSacolaNoPainel(nome, whatsDigitos, itens) {
+            if (!window.db) throw new Error('Firebase indisponível');
+            const id = 'SAC-' + whatsComDDI(whatsDigitos);
+            const agora = new Date();
+            const subtotalBruto = Math.round(carrinhoService.obterTotalBruto() * 100) / 100;
+            const total = Math.round(carrinhoService.obterTotal() * 100) / 100;
+            const subtotal = itens.reduce((a, i) => a + i.precoVendaUnitario * i.quantidade, 0);
+            const cupom = carrinhoService.obterCupomAplicado();
+            const qtd = itens.reduce((a, i) => a + (parseInt(i.quantidade, 10) || 0), 0);
+            const peso = itens.reduce((a, i) => a + (parseFloat(i.peso) || 0) * (parseInt(i.quantidade, 10) || 0), 0);
+
+            const dados = {
+                id, idPedido: id,
+                origem: 'sacola',
+                cliente: nome, nome,
+                whats: whatsComDDI(whatsDigitos), whatsapp: whatsComDDI(whatsDigitos), contato: whatsComDDI(whatsDigitos),
+                cidade: '', cidadeCliente: '',
+                pagamento: '', formaPagamento: '',
+                subtotalBruto,
+                subtotal: Math.round(subtotal * 100) / 100,
+                descontoOfertas: Math.max(0, Math.round((subtotalBruto - subtotal) * 100) / 100),
+                desconto: 0, frete: 0,
+                total, valorTotal: total,
+                pesoTotal: Math.round(peso * 100) / 100,
+                totalPecas: qtd, qtd,
+                cupomAplicado: cupom ? cupom.code : null,
+                observacoes: 'Sacola enviada pelo cliente (pedido ainda não finalizado).',
+                linkSacola: carrinhoService.gerarLinkCompartilhavel(),
+                itens: itens.map(i => ({
+                    id: i.id, sku: i.sku, codigo: i.sku, nome: i.name, name: i.name, variacao: i.variacao || '',
+                    precoOriginal: parseFloat(i.preco) || 0,
+                    preco: i.precoVendaUnitario, price: i.precoVendaUnitario, precoFinal: i.precoVendaUnitario,
+                    quantidade: i.quantidade,
+                    subtotal: Math.round(i.precoVendaUnitario * i.quantidade * 100) / 100,
+                    peso: parseFloat(i.peso) || 0,
+                    pesoTotal: (parseFloat(i.peso) || 0) * i.quantidade,
+                    imagem: i.image || '', image: i.image || ''
+                })),
+                status: 'Sacola',
+                timestamp: agora.getTime(),
+                dataCriacao: agora.toISOString(),
+                data: agora.toLocaleDateString('pt-BR')
+            };
+            await db.ref(`abella/orders/${id}`).set(dados);
+        }
+
+        async function confirmarEnvioSacola() {
+            const nome = document.getElementById('contatoNome').value.trim();
+            const whatsDigitos = somenteDigitos(document.getElementById('contatoWhats').value);
+            const erro = document.getElementById('contatoErro');
+
+            if (nome.length < 2) { erro.innerText = 'Informe seu nome.'; return; }
+            if (whatsDigitos.length < 10 || whatsDigitos.length > 13) { erro.innerText = 'Informe o WhatsApp com DDD. Ex.: (19) 99999-9999'; return; }
+
+            const btn = document.getElementById('btnContatoEnviar');
+            btn.disabled = true; btn.innerText = 'Enviando...';
+
+            // Abre a aba já no clique (evita bloqueio de pop-up no celular) e preenche depois.
+            const aba = window.open('', '_blank');
+
+            try { localStorage.setItem(CHAVE_CONTATO, JSON.stringify({ nome, whats: document.getElementById('contatoWhats').value.trim() })); } catch (e) {}
+
+            const itens = carrinhoService.listar();
+            const cfg = await obterConfigLoja();
+            const lojaWhats = somenteDigitos(cfg.whatsapp || cfg.whatsEmpresa || '5519988207658');
+            const nomeLoja = cfg.name || cfg.nomeEmpresa || 'Abella Joias';
+
+            // Salva no painel; se falhar, o WhatsApp ainda abre (o lead não se perde).
+            try {
+                await Promise.race([
+                    salvarSacolaNoPainel(nome, whatsDigitos, itens),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+                ]);
+            } catch (e) {
+                console.warn('[Carrinho] Não foi possível salvar a sacola no painel:', e);
+            }
+
+            const Q = '\n';
+            let msg = `*Minha sacola — ${nomeLoja}*${Q}${Q}`;
+            msg += `*Nome:* ${nome}${Q}*WhatsApp:* ${document.getElementById('contatoWhats').value.trim()}${Q}${Q}`;
+            itens.forEach(i => {
+                const v = i.variacao ? ` (${i.variacao})` : '';
+                msg += `• ${i.quantidade}x ${i.name}${v} — ${formatarMoeda(i.precoVendaUnitario * i.quantidade)}${Q}`;
+            });
+            msg += `${Q}*Total:* ${formatarMoeda(carrinhoService.obterTotal())}${Q}${Q}`;
+            msg += `Ver sacola: ${carrinhoService.gerarLinkCompartilhavel()}`;
+
+            const url = `https://api.whatsapp.com/send?phone=${lojaWhats}&text=${encodeURIComponent(msg)}`;
+            if (aba) aba.location.href = url; else window.location.href = url;
+
+            btn.disabled = false; btn.innerText = 'Enviar pelo WhatsApp';
+            fecharModalContato();
+            mostrarMsgCompartilhar('✅ Sacola enviada! Finalize no WhatsApp.');
+        }
+
+        function aplicarModoVisualizacao(info) {
+            const banner = document.getElementById('banner-compartilhada');
+            const texto = document.getElementById('bannerCompartilhadaTexto');
+            banner.classList.remove('hidden');
+
+            let aviso = 'Você está vendo uma sacola enviada por link. Nada foi alterado na sua própria sacola.';
+            if (info.indisponiveis.length) {
+                aviso += ` ${info.indisponiveis.length} item(ns) não estão mais disponíveis e foram omitidos.`;
+            }
+            texto.innerText = aviso;
+
+            document.getElementById('btnLimpar').style.display = 'none';
+            document.getElementById('cupomBox').style.display = 'none';
+            document.getElementById('acoesSacola').style.display = 'none';
+
+            const btn = document.getElementById('btnFinalizarSacola');
+            btn.innerText = 'Usar esta sacola e finalizar';
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const atual = JSON.parse(localStorage.getItem('pma_v8_carrinho_itens') || '[]');
+                if (atual.length && !confirm('Você já tem itens na sua sacola. Substituir pela sacola do link?')) return;
+                carrinhoService.usarSacolaCompartilhada();
+                window.location.href = 'checkout.html';
+            });
+        }
+
+        async function iniciarSacolaCompartilhada() {
+            const codigo = new URLSearchParams(window.location.search).get('s');
+            if (!codigo) return;
+            const lista = document.getElementById('lista-itens');
+            lista.innerHTML = '<p style="font-size:13px; color:var(--color-secondary);">Carregando sacola...</p>';
+            const info = await carrinhoService.carregarCompartilhada(codigo);
+            if (!info.itens.length) {
+                lista.innerHTML = '';
+                const banner = document.getElementById('banner-compartilhada');
+                banner.classList.remove('hidden');
+                document.getElementById('bannerCompartilhadaTexto').innerText = 'Não foi possível abrir esta sacola: o link está incompleto ou os produtos não estão mais disponíveis.';
+                return;
+            }
+            aplicarModoVisualizacao(info);
+        }
+
+        function alterarQuantidade(id, variacao, novaQtd) {
+            if (novaQtd < 1) {
+                removerItem(id, variacao);
+                return;
+            }
+            carrinhoService.atualizarQuantidade(id, novaQtd, variacao);
+            renderizarCarrinho();
+        }
+
+        function removerItem(id, variacao) {
+            carrinhoService.remover(id, variacao);
+            renderizarCarrinho();
+        }
+
+        async function aplicarCupomUI() {
+            const input = document.getElementById('inputCupom');
+            const msg = document.getElementById('cupomMsg');
+            const btn = document.getElementById('btnAplicarCupom');
+            const codigo = input.value.trim();
+
+            if (!codigo) { msg.style.color = 'var(--color-danger)'; msg.innerText = 'Digite um código.'; return; }
+            if (!window.cupomService) { msg.style.color = 'var(--color-danger)'; msg.innerText = 'Serviço de cupom indisponível.'; return; }
+
+            btn.disabled = true;
+            btn.innerText = 'Validando...';
+            msg.innerText = '';
+
+            const subtotalAtual = carrinhoService.obterTotalBruto();
+            const resultado = await cupomService.validar(codigo, subtotalAtual);
+
+            btn.disabled = false;
+            btn.innerText = 'Aplicar';
+
+            if (!resultado.valido) {
+                msg.style.color = 'var(--color-danger)';
+                msg.innerText = resultado.motivo;
+                return;
+            }
+
+            carrinhoService.aplicarCupom(resultado.cupom);
+            input.value = '';
+            msg.innerText = '';
+            renderizarCarrinho();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('breadcrumb-slot').innerHTML = AuroraRender.breadcrumb([
+                { label: 'Home', href: 'index.html' },
+                { label: 'Sacola' }
+            ]);
+
+            // IMPORTANTE: o carrinho precisa carregar as configurações antes do primeiro render.
+            // Sem o Firebase SDK nesta página, ConfigService retornava o fallback e
+            // as faixas de desconto por valor ficavam invisíveis no carrinho.
+            if (window.ConfigService) {
+                try {
+                    await ConfigService.getSettings(true);
+                } catch (e) {
+                    console.warn('[Carrinho] Falha ao pré-carregar settings:', e);
+                }
+            }
+
+            // Logo do cabeçalho — mesma lógica já usada em index.html,
+            // checkout.html e produtos.html. Feita à parte do ConfigService
+            // acima porque ele normaliza só o campo "logo", e o painel salva
+            // como "logoUrl" — mantém consistência com as páginas que já
+            // exibem a logo corretamente.
+            if (typeof db !== 'undefined') {
+                db.ref('abella/settings').once('value').then(snap => {
+                    if (!snap || !snap.exists()) return;
+                    const cfg = snap.val();
+                    const logoUrlReal = cfg.logoUrl || cfg.logo;
+                    if (!logoUrlReal) return;
+                    const logoImg = document.getElementById('abellaLogoImg');
+                    const logoFallback = document.getElementById('abellaLogoFallback');
+                    if (logoImg) {
+                        logoImg.src = typeof resolverImagemFirebase !== 'undefined' ? resolverImagemFirebase(logoUrlReal) : logoUrlReal;
+                        logoImg.style.display = 'block';
+                        if (logoFallback) logoFallback.style.display = 'none';
+                    }
+                }).catch(() => {});
+            }
+
+            await iniciarSacolaCompartilhada();
+            renderizarCarrinho();
+
+            document.getElementById('btnWhatsSacola').addEventListener('click', abrirModalContato);
+            document.getElementById('btnContatoCancelar').addEventListener('click', fecharModalContato);
+            document.getElementById('btnContatoEnviar').addEventListener('click', confirmarEnvioSacola);
+            document.getElementById('contatoWhats').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); confirmarEnvioSacola(); } });
+            document.getElementById('btnCompartilharSacola').addEventListener('click', copiarLinkSacola);
+
+            document.getElementById('btnAplicarCupom').addEventListener('click', aplicarCupomUI);
+            document.getElementById('inputCupom').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); aplicarCupomUI(); }
+            });
+            document.getElementById('btnRemoverCupom').addEventListener('click', () => {
+                carrinhoService.removerCupom();
+                renderizarCarrinho();
+            });
+
+            document.getElementById('btnLimpar').addEventListener('click', () => {
+                if (confirm('Tem certeza que deseja esvaziar a sacola?')) {
+                    carrinhoService.limpar();
+                    renderizarCarrinho();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

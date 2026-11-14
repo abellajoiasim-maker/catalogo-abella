@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- Analytics -->
+    <script src="./js/analytics.js"></script>
+
+    <!-- Meta Tags Principais de SEO -->
+    <title>Joias no Bruto para Revenda | Atacado Abella Joias</title>
+    <meta name="description" content="Compre joias no bruto e semijoias para revenda direto de fábrica em Limeira-SP. Explore coleções e galvânicas parceiras no catálogo Abella.">
+    <meta name="keywords" content="joias no bruto para revenda, atacado de joias, semijoias no atacado, fábrica de joias Limeira-SP, catálogo Abella Joias">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://catalogo.abellajoias.com.br/">
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/abellajoiasim-maker/abella-joias-cdn@main/home/logo.webp" type="image/webp">
+    <meta name="theme-color" content="#111111">
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         PRÉ-VISUALIZAÇÃO SOCIAL (Open Graph + Twitter Card) — CATÁLOGO
+         IMPORTANTE: WhatsApp/Facebook/Instagram/X/LinkedIn NÃO executam JavaScript.
+         Eles leem SOMENTE as tags abaixo. O JS da página só atualiza a aba do
+         navegador; para o link compartilhado mudar, troque a URL de og:image
+         e twitter:image aqui (o config.html gera o bloco pronto para colar).
+         Requisitos da imagem: URL https pública, JPG/PNG, 1200x630, até ~300 KB.
+         ═══════════════════════════════════════════════════════════════ -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Abella Joias">
+    <meta property="og:locale" content="pt_BR">
+    <meta property="og:title" content="Abella Joias • Atacado de Joias no Bruto">
+    <meta property="og:description" content="Atacado de joias no bruto, direto de fábrica em Limeira-SP. Encontre o catálogo completo de peças e galvânicas parceiras.">
+    <meta property="og:url" content="https://catalogo.abellajoias.com.br/">
+    <meta property="og:image" content="https://raw.githubusercontent.com/abellajoiasim-maker/abella-joias-cdn/main/home/og-catalogo.jpg">
+    <meta property="og:image:secure_url" content="https://raw.githubusercontent.com/abellajoiasim-maker/abella-joias-cdn/main/home/og-catalogo.jpg">
+    <meta property="og:image:alt" content="Abella Joias — Catálogo de atacado de joias no bruto em Limeira-SP">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- width/height/type acima correspondem à imagem real (1200x630 JPEG). Se trocar por outra de tamanho diferente, atualize ou remova. -->
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Abella Joias • Atacado de Joias no Bruto">
+    <meta name="twitter:description" content="Atacado de joias no bruto, direto de fábrica em Limeira-SP.">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/abellajoiasim-maker/abella-joias-cdn/main/home/og-catalogo.jpg">
+    <meta name="twitter:image:alt" content="Abella Joias — Catálogo de atacado de joias no bruto em Limeira-SP">
+
+    <!-- Scripts de Configuração Inicial e Firebase -->
+    <script>window.AURORA_FALLBACK_IMAGE = 'https://cdn.jsdelivr.net/gh/abellajoiasim-maker/abella-joias-cdn@main/settings/placeholder.webp';</script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <!-- Central SEO IQ200 - Orquestrador de Metadados e SEO -->
+    <script src="modulo/js/central-seo-iq200.js"></script>
+
+    <!-- SEO IQ200 — Schema.org Identidade da marca para o Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://catalogo.abellajoias.com.br/#organization",
+          "name": "Abella Joias",
+          "url": "https://catalogo.abellajoias.com.br/",
+          "logo": "https://cdn.jsdelivr.net/gh/abellajoiasim-maker/abella-joias-cdn@main/home/logo.webp",
+          "description": "Atacado de Joias no Bruto, direto de fábrica em Limeira-SP."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://catalogo.abellajoias.com.br/#website",
+          "url": "https://catalogo.abellajoias.com.br/",
+          "name": "Abella Joias",
+          "publisher": { "@id": "https://catalogo.abellajoias.com.br/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://catalogo.abellajoias.com.br/produtos.html?busca={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Estilos do Tema -->
+    <link rel="stylesheet" href="components/index.css">
+    <style>
+        .hero-rule{ width:64px; height:1px; background: var(--color-primary); margin: 0 auto; }
+        .hero-copy{
+            position: relative; text-align:center; overflow:hidden;
+            padding: var(--space-9) var(--space-5) var(--space-7); max-width:680px; margin: 0 auto;
+        }
+        .hero-copy::before{
+            content:''; position:absolute; top:50%; left:50%; width:520px; height:520px;
+            background: radial-gradient(circle, rgba(var(--color-primary-rgb),.14) 0%, rgba(var(--color-primary-rgb),0) 70%);
+            transform: translate(-50%,-50%); z-index:-1; pointer-events:none;
+        }
+        .hero-copy .glyph{
+            font-family: var(--font-heading); font-style:italic; font-size:88px; line-height:1;
+            color: rgba(var(--color-primary-rgb),.22); margin-bottom: calc(-1 * var(--space-4));
+            user-select:none;
+        }
+        .trust-strip{ display:flex; border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border); }
+        .trust-item{ flex:1; text-align:center; padding: var(--space-6) var(--space-4); }
+        .trust-item + .trust-item{ border-left:1px solid var(--color-border); }
+        @media (max-width:768px){
+            .trust-strip{ flex-direction:column; }
+            .trust-item + .trust-item{ border-left:0; border-top:1px solid var(--color-border); }
+            .hero-copy .glyph{ font-size:64px; }
+        }
+
+        /* PROMOÇÕES — cards editáveis pelo painel */
+        #promocoes .promo-grid{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:center;
+            gap:32px;
+        }
+        #promocoes .promo-card{
+            position:relative;
+            display:flex;
+            flex-direction:column;
+            width:100%;
+            max-width:360px;
+            flex:1 1 320px;
+            border:1px solid var(--color-border);
+            border-radius: var(--radius-lg, 22px);
+            overflow:hidden;
+            background:var(--color-surface,#fff);
+            text-decoration:none;
+            color:inherit;
+            box-shadow:0 6px 20px rgba(0,0,0,.05);
+            transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s ease;
+        }
+        #promocoes .promo-card::before{
+            content:'';
+            position:absolute;
+            top:0; left:0; right:0;
+            height:3px;
+            background:linear-gradient(90deg, transparent, var(--color-primary), transparent);
+            opacity:0;
+            transition:opacity .35s ease;
+            z-index:3;
+        }
+        #promocoes .promo-card:hover{
+            transform:translateY(-6px);
+            box-shadow:0 22px 44px rgba(var(--color-primary-rgb),.18);
+            border-color:var(--color-primary);
+        }
+        #promocoes .promo-card:hover::before{
+            opacity:1;
+        }
+        #promocoes .promo-img{
+            position:relative;
+            width:100%;
+            aspect-ratio:16/9;
+            overflow:hidden;
+            background: rgba(var(--color-primary-rgb),.06);
+        }
+        #promocoes .promo-img img{
+            position:absolute;
+            inset:0;
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            object-position:center;
+            display:block;
+            transition:transform .6s ease;
+        }
+        #promocoes .promo-card:hover .promo-img img{
+            transform:scale(1.06);
+        }
+        #promocoes .promo-body{
+            padding: var(--space-6, 22px) var(--space-6, 24px) var(--space-7, 26px);
+            display:flex;
+            flex-direction:column;
+            flex:1;
+        }
+        #promocoes .promo-selo{
+            display:block;
+            font-size:10px;
+            letter-spacing:.2em;
+            text-transform:uppercase;
+            color:var(--color-primary-hover);
+            font-weight:700;
+            margin-bottom:10px;
+        }
+        #promocoes .promo-body h3{
+            font-family: var(--font-heading);
+            font-size:18px;
+            line-height:1.35;
+            margin:0 0 8px;
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+        }
+        #promocoes .promo-body .desc{
+            font-size:13px;
+            line-height:1.6;
+            color:var(--color-secondary);
+            margin:0 0 16px;
+            display:-webkit-box;
+            -webkit-line-clamp:2;
+            -webkit-box-orient:vertical;
+            overflow:hidden;
+        }
+        #promocoes .promo-precos{
+            display:flex;
+            align-items:baseline;
+            gap:10px;
+            flex-wrap:wrap;
+            margin-top:auto;
+            padding-top:14px;
+            border-top:1px solid var(--color-border);
+            margin-bottom:16px;
+        }
+        #promocoes .promo-precos .de{
+            font-size:13px;
+            font-style:italic;
+            color:#a8a29a;
+            text-decoration:line-through;
+        }
+        #promocoes .promo-precos .por{
+            font-family: var(--font-heading);
+            font-size:20px;
+            font-weight:700;
+            color:var(--color-primary-hover);
+        }
+        #promocoes .promo-empty{
+            width:100%;
+            text-align:center;
+            padding:32px 0;
+            color:var(--color-secondary);
+            font-size:13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Principal -->
+    <div class="aurora-header">
+        <div class="util-bar">Abella Joias • Catálogo Premium</div>
+        <div class="bar aurora-container">
+            <nav class="nav-links">
+                <a href="#promocoes">Promoções</a>
+                <a href="produtos.html?lancamentos=1">Lançamentos</a>
+                <a href="#categorias">Coleções</a>
+                <a href="produtos.html?modo=rapida">Compra rápida</a>
+                <a href="./galvanicas.html">Galvânicas</a>
+            </nav>
+            <div class="brand">
+                <div class="brand-logo" id="abellaLogoContainer">
+                    <span id="abellaLogoFallback" style="font-family:var(--font-heading); font-weight:600;">A</span>
+                    <img id="abellaLogoImg" src="" alt="Abella Joias" style="width:100%;height:100%;object-fit:contain;display:none;">
+                </div>
+                <div>
+                    <p class="brand-name" id="nome">Abella</p>
+                    <p class="brand-slogan" id="slogan">Catálogo Premium</p>
+                </div>
+            </div>
+            <div class="actions">
+                <a id="whats" href="#" target="_blank" rel="noopener noreferrer" class="hidden-mobile" style="font-size:12px;color:var(--color-secondary); margin-right: var(--space-2);">WhatsApp</a>
+                <a href="carrinho.html" class="cart-btn"><span id="cart-count">0</span></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner Promocional -->
+    <div id="banner" class="hidden" style="background:var(--color-text); text-align:center; padding-block: var(--space-3);">
+        <p id="bannerTexto" style="color: var(--color-primary); font-weight:700; text-transform:uppercase; letter-spacing:.2em; font-size:12px;"></p>
+    </div>
+
+    <main class="aurora-container">
+
+        <!-- Hero Copy -->
+        <section class="hero-copy" data-aurora-reveal>
+            <p class="glyph">&amp;</p>
+            <p style="font-size:12px; letter-spacing:.3em; text-transform:uppercase; color: var(--color-primary-hover); margin-bottom: var(--space-3);">Catálogo Corporativo Online</p>
+            <h1 style="font-size: clamp(28px, 5vw, 52px); line-height:1.08;">Sua próxima coleção <em style="font-style:italic;">começa aqui</em>.</h1>
+            <div class="hero-rule" style="margin: var(--space-5) auto 0;"></div>
+            <p style="font-size:14px; color:var(--color-secondary); margin: var(--space-4) auto var(--space-6);">Plataforma inteligente de pedidos. Compre com clareza, segurança e total transparência.</p>
+            <div style="display:flex;justify-content:center;gap:var(--space-3);flex-wrap:wrap;">
+                <a href="#categorias" class="aurora-btn aurora-btn--outline">Explorar Coleções</a>
+                <a href="produtos.html?modo=rapida" class="aurora-btn aurora-btn--primary">Compra rápida</a>
+            </div>
+        </section>
+
+        <!-- Faixa Institucional Nacional -->
+        <section class="aurora-section" style="padding-block: var(--space-6);">
+            <div style="background: var(--color-primary-tint, rgba(var(--color-primary-rgb),.08)); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); text-align:center;">
+                <p style="font-family: var(--font-heading); font-size: clamp(18px,2.6vw,26px); color: var(--color-primary-hover); display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap;">
+                    <svg width="26" height="18" viewBox="0 0 26 18" style="flex-shrink:0; display:inline-block; border-radius:2px;" aria-hidden="true">
+                        <rect width="26" height="18" fill="#009739"/>
+                        <polygon points="13,2.5 24,9 13,15.5 2,9" fill="#FEDD00"/>
+                        <circle cx="13" cy="9" r="4" fill="#012169"/>
+                    </svg>
+                    100% Nacional — sua reposição nunca vai faltar.
+                </p>
+                <p style="font-size:13px; color:var(--color-secondary); margin-top: var(--space-2);">
+                    Fabricação própria, sem depender de importação. O que você vende hoje, você repõe amanhã.
+                </p>
+            </div>
+        </section>
+
+        <!-- Faixa de Destaques / Condições -->
+        <section class="trust-strip">
+            <div class="trust-item">
+                <p style="font-size:10px; text-transform:uppercase; letter-spacing:.15em; color:var(--color-secondary); font-weight:600;">Parcelamento</p>
+                <p id="parcelamento" style="font-family:var(--font-heading); font-size:20px; color:var(--color-primary-hover); margin-top: var(--space-1);">3x sem juros</p>
+            </div>
+            <div class="trust-item">
+                <p style="font-size:10px; text-transform:uppercase; letter-spacing:.15em; color:var(--color-secondary); font-weight:600;">PIX</p>
+                <p id="pix" style="font-family:var(--font-heading); font-size:20px; color:var(--color-success); margin-top: var(--space-1);">5% OFF</p>
+            </div>
+            <div class="trust-item">
+                <p style="font-size:10px; text-transform:uppercase; letter-spacing:.15em; color:var(--color-secondary); font-weight:600;">Atendimento</p>
+                <p style="font-family:var(--font-heading); font-size:20px; color:var(--color-primary-hover); margin-top: var(--space-1);">WhatsApp</p>
+            </div>
+        </section>
+
+        <!-- Seção de Promoções Vigentes -->
+        <section class="aurora-section" id="promocoes">
+            <div style="text-align:center; margin-bottom: var(--space-7);">
+                <p style="font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--color-primary-hover); font-weight:700;">Condições especiais</p>
+                <h2 style="font-size: clamp(26px,4vw,44px); margin-top: var(--space-2);">Promoções vigentes</h2>
+                <p style="font-size:13px; color:var(--color-secondary); margin-top: var(--space-2);">Ofertas atuais do catálogo — atualizadas direto pelo painel administrativo.</p>
+            </div>
+            <div class="promo-grid" id="promoGrid">
+                <div class="promo-empty">⏳ Carregando promoções...</div>
+            </div>
+        </section>
+
+        <!-- Seção de Categorias e Busca -->
+        <section class="aurora-section" id="categorias">
+            <div style="max-width:620px; margin: 0 auto; position:relative;">
+                <input type="search" id="busca" placeholder="Buscar por nome, SKU, código ou descrição..." autocomplete="off" class="aurora-input" style="border-radius: var(--radius-xl); padding-left: var(--space-8); height:52px;" aria-label="Buscar produtos">
+                <span style="position:absolute; left:var(--space-4); top:50%; transform:translateY(-50%); color:var(--color-secondary); pointer-events:none;">🔎</span>
+                <div id="sugestoes-busca" style="display:none; position:absolute; z-index:100; left:0; right:0; top:58px; background:white; border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:0 12px 35px rgba(0,0,0,.12); overflow:hidden; text-align:left;"></div>
+            </div>
+            <p id="ajuda-busca" style="text-align:center; font-size:11px; color:var(--color-secondary); margin: var(--space-2) 0 var(--space-7);">Busque por qualquer parte do SKU, nome, código, categoria ou descrição.</p>
+
+            <div id="loading" style="text-align:center; padding: var(--space-6) 0;">
+                <p style="color:var(--color-primary-hover); font-weight:600;">⏳ Carregando categorias...</p>
+            </div>
+
+            <div style="text-align:center; margin-bottom: var(--space-7);">
+                <p style="font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--color-primary-hover); font-weight:700;">Catálogo Premium</p>
+                <h2 style="font-size: clamp(26px,4vw,44px); margin-top: var(--space-2);">Categorias Oficiais</h2>
+            </div>
+
+            <div id="grid-categorias" class="aurora-grid"></div>
+
+            <div id="no-result" class="hidden" style="grid-column:1/-1; text-align:center; padding: var(--space-8) 0;">
+                <p style="font-size:14px; color:var(--color-secondary);">Nenhuma categoria encontrada.</p>
+            </div>
+        </section>
+
+        <!-- Seção FAQ SEO -->
+        <section class="aurora-section" id="faq-seo" style="max-width:760px; margin:0 auto;">
+            <div style="text-align:center; margin-bottom: var(--space-6);">
+                <p style="font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--color-primary-hover); font-weight:700;">Dúvidas Frequentes</p>
+                <h2 style="font-size: clamp(22px,3.4vw,32px); margin-top: var(--space-2);">Perguntas sobre o atacado Abella Joias</h2>
+            </div>
+            <div id="faq-lista"></div>
+        </section>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="aurora-footer">
+        <div class="aurora-container">
+            <div class="grid">
+                <div>
+                    <p class="brand-name">Abella Joias</p>
+                    <p class="description">Atacado de Joias no Bruto — Especialista em joias no bruto no atacado — acabamento impecável e estrutura perfeita para alto padrão de folheação.</p>
+                </div>
+                <div>
+                    <p class="col-title">Navegação</p>
+                    <ul><li><a href="#categorias">Coleções</a></li><li><a href="./galvanicas.html">Galvânicas</a></li><li><a href="carrinho.html">Sacola</a></li></ul>
+                </div>
+                <div>
+                    <p class="col-title">Atendimento</p>
+                    <ul><li><a id="whatsFooter" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a></li></ul>
+                </div>
+                <div>
+                    <p class="col-title">Redes</p>
+                    <div class="social-row" id="socialRow"></div>
+                </div>
+            </div>
+            <div class="bottom">
+                <span>© Abella Joias — Atacado de Joias no Bruto</span>
+                <span>Luxury V11</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal Reutilizável -->
+    <div class="aurora-modal-overlay" id="auroraModal">
+        <div class="aurora-modal" role="dialog" aria-modal="true">
+            <div class="header"><h3 class="title" id="auroraModalTitle"></h3><button class="close-btn" onclick="AuroraModal.close()">✕</button></div>
+            <div class="body" id="auroraModalBody"></div>
+            <div class="footer" id="auroraModalFooter"></div>
+        </div>
+    </div>
+
+    <!-- Scripts da Aplicação -->
+    <script src="./js/firebase/firebase-config.js"></script>
+    <script src="./js/utils/money.js"></script>
+    <script src="./js/utils/peso.js"></script>
+    <script src="./js/utils/storage.js"></script>
+    <script src="./js/services/carrinhoService.js"></script>
+    <script src="./js/services/faqSeoService.js"></script>
+    <script src="./js/utils/image-helper.js"></script>
+    <script src="./js/utils/seoAltGenerator.js"></script>
+
+    <script src="components/modal.js"></script>
+    <script src="engine/render.js"></script>
+    <script src="engine/animations.js"></script>
+    <script src="engine/mobile-nav.js"></script>
+
+    <script>
+        // Converte gs://bucket/caminho em URL https pública (fallback caso image-helper.js não converta)
+        function converterGsUrlOg(url) {
+            const v = String(url || '').trim();
+            if (!v.startsWith('gs://')) return v;
+            const sem = v.replace('gs://', '');
+            const i = sem.indexOf('/');
+            if (i === -1) return '';
+            // Firebase Storage indisponível (402): resolve pelo CDN via ImageHelper
+            return (window.ImageHelper && typeof ImageHelper.converterGsUrl === 'function')
+                ? ImageHelper.converterGsUrl(v)
+                : '';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const grid = document.getElementById('grid-categorias');
+            const loading = document.getElementById('loading');
+            const noResult = document.getElementById('no-result');
+
+            // Atualiza o contador da sacola a partir do serviço real
+            function atualizarContadorSacola() {
+                const el = document.getElementById('cart-count');
+                if (el && window.carrinhoService && typeof carrinhoService.obterContagem === 'function') {
+                    el.innerText = carrinhoService.obterContagem();
+                }
+            }
+            atualizarContadorSacola();
+
+            if (typeof db === 'undefined') {
+                console.error('Instância global "db" do Firebase não encontrada.');
+                if (loading) loading.innerHTML = `<p style="color:var(--color-danger);font-size:13px;">⚠️ Conexão com o banco de dados não configurada.</p>`;
+                return;
+            }
+
+            try {
+                const [snapSettings, snapCategories] = await Promise.all([
+                    db.ref('abella/settings').once('value').catch(() => null),
+                    db.ref('abella/categories').once('value').catch(() => null)
+                ]);
+
+                let cfg = {};
+                if (snapSettings && snapSettings.exists()) {
+                    cfg = snapSettings.val();
+
+                    // Logo e Fallback
+                    const logoUrlReal = cfg.logoUrl || cfg.logo;
+                    if (logoUrlReal) {
+                        const img = document.getElementById('abellaLogoImg');
+                        const fallback = document.getElementById('abellaLogoFallback');
+                        if (img) {
+                            img.src = typeof resolverImagemFirebase !== 'undefined' ? resolverImagemFirebase(logoUrlReal) : logoUrlReal;
+                            img.style.display = 'block';
+                            if (fallback) fallback.style.display = 'none';
+                        }
+                    }
+
+                    // Atualização dinâmica do OG Image (Catálogo: ogImageUrlCatalog → ogImageUrl → ogImage)
+                    // Obs.: isto só afeta o navegador/inspeção. Robôs sociais leem as tags estáticas do <head>.
+                    const ogImageBruta = cfg.ogImageUrlCatalog || cfg.ogImageUrl || cfg.ogImage || '';
+                    if (ogImageBruta) {
+                        const ogImageUrlReal = typeof resolverImagemFirebase === 'function'
+                            ? resolverImagemFirebase(ogImageBruta)
+                            : converterGsUrlOg(ogImageBruta);
+
+                        if (ogImageUrlReal) {
+                            document.querySelectorAll('meta[property="og:image"], meta[property="og:image:secure_url"], meta[name="twitter:image"]').forEach(meta => {
+                                meta.setAttribute('content', ogImageUrlReal);
+                            });
+                            // dimensões/tipo do arquivo novo são desconhecidos: remove para não ficarem incoerentes
+                            document.querySelectorAll('meta[property="og:image:width"], meta[property="og:image:height"], meta[property="og:image:type"]').forEach(m => m.remove());
+                        }
+                    }
+                }
+
+                if (cfg.name) document.getElementById('nome').innerText = cfg.name;
+                if (cfg.slogan) document.getElementById('slogan').innerText = cfg.slogan;
+                if (cfg.parcelas) document.getElementById('parcelamento').innerText = `${cfg.parcelas}x sem juros`;
+                if (cfg.pix) document.getElementById('pix').innerText = `${cfg.pix}% OFF`;
+                if (cfg.whatsapp) {
+                    const link = `https://wa.me/${cfg.whatsapp.replace(/\D/g, '')}`;
+                    const w1 = document.getElementById('whats'); if (w1) w1.href = link;
+                    const w2 = document.getElementById('whatsFooter'); if (w2) w2.href = link;
+                }
+                if (cfg.bannerAtivo && cfg.bannerTexto) {
+                    document.getElementById('banner').classList.remove('hidden');
+                    document.getElementById('bannerTexto').innerText = cfg.bannerTexto;
+                }
+
+                // Redes sociais — mesmos ícones oficiais (SVG) e mesma fonte de configuração
+                const urlSocialSegura = valor => {
+                    if (!valor) return '';
+                    const v = String(valor).trim();
+                    if (!v) return '';
+                    return /^https?:\/\//i.test(v) ? v : `https://${v}`;
+                };
+                const redesSociais = [
+                    { url: cfg.instagram, label: 'Instagram', svg: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>' },
+                    { url: cfg.facebook, label: 'Facebook', svg: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>' }
+                ].map(s => ({ ...s, url: urlSocialSegura(s.url) })).filter(s => s.url);
+
+                const socialRow = document.getElementById('socialRow');
+                if (socialRow && redesSociais.length > 0) {
+                    socialRow.innerHTML = redesSociais.map(s =>
+                        `<a href="${s.url}" target="_blank" rel="noopener noreferrer" aria-label="${s.label}">${s.svg}<span class="sr-only">${s.label}</span></a>`
+                    ).join('');
+                }
+
+                let listaCategorias = [];
+                if (snapCategories && snapCategories.exists() && snapCategories.val()) {
+                    const dados = snapCategories.val();
+                    listaCategorias = Array.isArray(dados)
+                        ? dados.filter(Boolean)
+                        : Object.entries(dados).map(([slug, val]) => ({ slug, ...val }));
+                }
+                listaCategorias = listaCategorias.filter(c => c && c.paused !== true);
+
+                if (loading) loading.classList.add('hidden');
+
+                if (listaCategorias.length === 0) {
+                    if (noResult) noResult.classList.remove('hidden');
+                    return;
+                }
+
+                grid.innerHTML = listaCategorias.map(cat => {
+                    const html = AuroraRender.categoryCard(cat);
+                    return `<div class="col-4" data-aurora-reveal>${html}</div>`;
+                }).join('');
+
+                const inputBusca = document.getElementById('busca');
+                const sugestoesBusca = document.getElementById('sugestoes-busca');
+                const ajudaBusca = document.getElementById('ajuda-busca');
+                if (inputBusca) {
+                    const normalizarBusca = (txt) => String(txt || '')
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[-_/\\]+/g, ' ')
+                        .replace(/\s+/g, ' ')
+                        .trim();
+
+                    const escaparBuscaHTML = (txt) => {
+                        const d = document.createElement('div');
+                        d.textContent = String(txt ?? '');
+                        return d.innerHTML;
+                    };
+
+                    let produtosBusca = [];
+                    try {
+                        if (typeof db !== 'undefined') {
+                            const snapProdutosBusca = await db.ref('abella/products').once('value');
+                            if (snapProdutosBusca.exists()) {
+                                const dadosProdutosBusca = snapProdutosBusca.val();
+                                produtosBusca = Array.isArray(dadosProdutosBusca)
+                                    ? dadosProdutosBusca.map((p, i) => ({ id: p?.id || String(i), ...p }))
+                                    : Object.entries(dadosProdutosBusca).map(([id, p]) => ({ id, ...p }));
+                                produtosBusca = produtosBusca.filter(p => p && p.ativo !== false && p.paused !== true && !p._ehVitrine);
+                                produtosBusca = produtosBusca.map(p => ({
+                                    ...p,
+                                    _busca: normalizarBusca([
+                                        p.nome, p.name, p.sku, p.codigo, p.id, p.descricao,
+                                        p.categoriaId, p.category, p.categoria, p.subcategoriaId, p.subcategory,
+                                        ...(Array.isArray(p.tags) ? p.tags : []),
+                                        ...(Array.isArray(p.dizeres) ? p.dizeres : []),
+                                        ...(Array.isArray(p.iniciais) ? p.iniciais : [])
+                                    ].filter(Boolean).join(' '))
+                                }));
+                            }
+                        }
+                    } catch (erroBusca) {
+                        console.warn('[Home] Não foi possível pré-carregar o índice de produtos:', erroBusca);
+                    }
+
+                    const tokensBusca = (valor) => normalizarBusca(valor).split(' ').filter(Boolean);
+                    const produtoCasaCompativel = (produto, valor) => {
+                        const alvo = produto?._busca || '';
+                        const tokens = tokensBusca(valor);
+                        return tokens.length === 0 || tokens.every(token => alvo.includes(token));
+                    };
+
+                    const navegarParaBusca = () => {
+                        const termo = inputBusca.value.trim();
+                        if (termo) window.location.href = `produtos.html?busca=${encodeURIComponent(termo)}`;
+                    };
+
+                    const renderizarSugestoes = (valor) => {
+                        const termo = normalizarBusca(valor);
+                        if (!sugestoesBusca) return;
+                        if (!termo) {
+                            sugestoesBusca.style.display = 'none';
+                            sugestoesBusca.innerHTML = '';
+                            return;
+                        }
+
+                        const encontrados = produtosBusca.filter(p => produtoCasaCompativel(p, termo)).slice(0, 8);
+                        if (!encontrados.length) {
+                            sugestoesBusca.innerHTML = `<div style="padding:14px 16px;font-size:12px;color:var(--color-secondary);">Nenhum produto encontrado. Pressione Enter para ver a busca completa.</div>`;
+                            sugestoesBusca.style.display = 'block';
+                            return;
+                        }
+
+                        sugestoesBusca.innerHTML = encontrados.map(p => {
+                            const nome = escaparBuscaHTML(p.nome || p.name || 'Produto');
+                            const sku = escaparBuscaHTML(p.sku || p.codigo || p.id || '');
+                            return `<button type="button" data-busca-produto="${escaparBuscaHTML(p.id)}" style="display:flex;width:100%;align-items:center;gap:12px;padding:11px 14px;border:0;border-bottom:1px solid var(--color-border);background:white;text-align:left;cursor:pointer;">
+                                <span style="font-size:16px;">💎</span><span style="display:flex;flex-direction:column;min-width:0;"><strong style="font-size:12px;color:var(--color-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nome}</strong><small style="font-size:10px;color:var(--color-secondary);">SKU: ${sku}</small></span>
+                            </button>`;
+                        }).join('') + `<button type="button" id="ver-todos-resultados" style="width:100%;padding:12px;border:0;background:var(--color-background-alt,#fafafa);font-size:11px;font-weight:700;cursor:pointer;">Ver todos os resultados para “${escaparBuscaHTML(valor)}” →</button>`;
+                        sugestoesBusca.style.display = 'block';
+
+                        sugestoesBusca.querySelectorAll('[data-busca-produto]').forEach(btn => {
+                            btn.addEventListener('click', () => navegarParaBusca());
+                        });
+                        sugestoesBusca.querySelector('#ver-todos-resultados')?.addEventListener('click', navegarParaBusca);
+                    };
+
+                    inputBusca.addEventListener('input', (e) => {
+                        const valor = e.target.value;
+                        const termo = normalizarBusca(valor);
+                        let achouCategoria = false;
+                        grid.querySelectorAll('.aurora-card--category').forEach(card => {
+                            const nomeEl = card.querySelector('.title');
+                            const texto = normalizarBusca(nomeEl?.innerText || '');
+                            const visivel = !termo || tokensBusca(valor).every(t => texto.includes(t));
+                            card.closest('.col-4').style.display = visivel ? '' : 'none';
+                            if (visivel) achouCategoria = true;
+                        });
+                        const achouProduto = produtosBusca.some(p => produtoCasaCompativel(p, valor));
+                        noResult.classList.toggle('hidden', !termo || achouCategoria || achouProduto);
+                        if (ajudaBusca) ajudaBusca.innerText = termo
+                            ? `${produtosBusca.filter(p => produtoCasaCompativel(p, valor)).length} produto(s) encontrado(s) • Enter abre todos os resultados`
+                            : 'Busque por qualquer parte do SKU, nome, código, categoria ou descrição.';
+                        renderizarSugestoes(valor);
+                    });
+
+                    inputBusca.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' && inputBusca.value.trim()) {
+                            e.preventDefault();
+                            navegarParaBusca();
+                        }
+                        if (e.key === 'Escape' && sugestoesBusca) {
+                            sugestoesBusca.style.display = 'none';
+                        }
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        if (!sugestoesBusca?.contains(e.target) && e.target !== inputBusca) {
+                            if (sugestoesBusca) sugestoesBusca.style.display = 'none';
+                        }
+                    });
+                }
+
+                // Recarrega o reveal-on-scroll pros cards recém-criados
+                if (window.AuroraAnimations) AuroraAnimations.initReveal();
+
+            } catch (error) {
+                console.error('Falha ao carregar Home:', error);
+                if (loading) {
+                    loading.classList.remove('hidden');
+                    loading.innerHTML = `<p style="color:var(--color-danger);font-size:13px;">⚠️ Erro técnico ao carregar categorias.</p>`;
+                }
+            }
+
+            // Promoções da Home (abella/promocoes)
+            try {
+                const promoGrid = document.getElementById('promoGrid');
+                if (promoGrid && typeof db !== 'undefined') {
+                    const snapPromos = await db.ref('abella/promocoes').once('value').catch(() => null);
+                    let promocoes = [];
+                    if (snapPromos && snapPromos.exists()) {
+                        const dados = snapPromos.val();
+                        promocoes = Array.isArray(dados)
+                            ? dados.map((val, i) => ({ id: val?.id || String(i), ...val })).filter(Boolean)
+                            : Object.entries(dados).map(([id, val]) => ({ id, ...val }));
+                    }
+                    promocoes = promocoes.filter(p => p && p.paused !== true && p.ativa !== false).slice(0, 6);
+
+                    if (promocoes.length === 0) {
+                        promoGrid.innerHTML = '<div class="promo-empty">Nenhuma promoção ativa no momento — confira o catálogo para condições especiais.</div>';
+                    } else {
+                        promoGrid.innerHTML = promocoes.map(p => {
+                            const titulo = p.titulo || 'Promoção';
+                            const desc = p.descricao || p.desc || '';
+                            const precoDe = p.precoDe || p.preco_de || '';
+                            const precoPor = p.precoPor || p.preco_por || p.preco || '';
+                            const imgBruta = p.imagem || p.image || '';
+                            const link = p.link || 'https://catalogo.abellajoias.com.br';
+                            const img = imgBruta ? (typeof resolverImagemFirebase === 'function' ? resolverImagemFirebase(imgBruta) : imgBruta) : '';
+                            return `
+                                <a class="promo-card" href="${link}" target="_blank" rel="noopener" data-aurora-reveal>
+                                    <div class="promo-img">
+                                        ${img ? `<img src="${img}" alt="${titulo}" loading="lazy" onerror="this.style.display='none'">` : ''}
+                                    </div>
+                                    <div class="promo-body">
+                                        <span class="promo-selo">${p.selo || 'Oferta Especial'}</span>
+                                        <h3>${titulo}</h3>
+                                        ${desc ? `<p class="desc">${desc}</p>` : ''}
+                                        <div class="promo-precos">
+                                            ${precoDe ? `<span class="de">${precoDe}</span>` : ''}
+                                            ${precoPor ? `<span class="por">${precoPor}</span>` : ''}
+                                        </div>
+                                        <span class="aurora-btn aurora-btn--outline" style="width:100%; text-align:center;">Ver promoção →</span>
+                                    </div>
+                                </a>
+                            `;
+                        }).join('');
+                        if (window.AuroraAnimations) AuroraAnimations.initReveal();
+                    }
+                }
+            } catch (promoError) {
+                console.error('[Home] Falha ao carregar promoções:', promoError);
+                const promoGrid = document.getElementById('promoGrid');
+                if (promoGrid) promoGrid.innerHTML = '<div class="promo-empty">⚠️ Erro ao carregar promoções.</div>';
+            }
+
+            // SEO IQ200 — FAQ Schema
+            try {
+                const faqLista = document.getElementById('faq-lista');
+                if (faqLista && window.FaqSeoService) {
+                    const faqs = await window.FaqSeoService.obterFaqs();
+
+                    if (faqs.length > 0) {
+                        faqLista.innerHTML = faqs.map((f, i) => `
+                            <details style="border-bottom:1px solid var(--color-border); padding: var(--space-4) 0;" ${i === 0 ? 'open' : ''}>
+                                <summary style="cursor:pointer; font-family:var(--font-heading); font-size:15px; color:var(--color-primary-hover);">${f.pergunta}</summary>
+                                <p style="font-size:13px; color:var(--color-secondary); margin-top: var(--space-2); line-height:1.7;">${f.resposta}</p>
+                            </details>
+                        `).join('');
+
+                        const faqSchema = {
+                            "@context": "https://schema.org",
+                            "@type": "FAQPage",
+                            "mainEntity": faqs.map(f => ({
+                                "@type": "Question",
+                                "name": f.pergunta,
+                                "acceptedAnswer": { "@type": "Answer", "text": f.resposta }
+                            }))
+                        };
+
+                        let faqScriptTag = document.getElementById('iq200-faq-schema');
+                        if (!faqScriptTag) {
+                            faqScriptTag = document.createElement('script');
+                            faqScriptTag.id = 'iq200-faq-schema';
+                            faqScriptTag.type = 'application/ld+json';
+                            document.head.appendChild(faqScriptTag);
+                        }
+                        faqScriptTag.textContent = JSON.stringify(faqSchema);
+                    }
+                }
+            } catch (faqError) {
+                console.error('[SEO IQ200] Falha ao renderizar FAQ:', faqError);
+            }
+        });
+    </script>
+</body>
+</html>
