@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+        <meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impressão de Romaneio • Abella Joias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SDKs do Firebase (Versão Compatível: App, Auth e Database) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: white; color: black; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+
+        /* Marca cada linha da tabela (e os blocos já marcados com
+           .break-inside-avoid, como o resumo financeiro e a barra de totais)
+           para nunca serem cortados ao meio — nem na impressão nativa do
+           navegador, nem na geração de PDF via html2pdf.js (que lê esse
+           "break-inside: avoid" computado para decidir onde pode quebrar a
+           página). Fica fora do @media print de propósito: o html2pdf.js
+           "fotografa" a página em estado normal de tela, não em modo de
+           impressão, então uma regra só dentro de @media print não seria
+           enxergada por ele na hora de gerar o PDF. */
+        tr, .break-inside-avoid {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            /* Define explicitamente o tamanho/margens da página impressa.
+               Sem isso, alguns navegadores (principalmente no celular) podem
+               calcular a paginação errado e mostrar uma pré-visualização em
+               branco até o conteúdo terminar de carregar. */
+            @page {
+                size: A4;
+                margin: 10mm 8mm;
+            }
+            body { background: white; color: black; padding: 0; }
+            .no-print { display: none !important; }
+            /* Garantia extra: se o usuário imprimir antes do conteúdo
+               terminar de carregar, o loader nunca aparece impresso — melhor
+               uma página em branco momentânea do que o texto "carregando". */
+            #loader { display: none !important; }
+            /* Sem isto, o navegador ignora cores de fundo na impressão (pra
+               economizar tinta) — e a etiqueta escura de quantidade na grade
+               (bg-black/bg-zinc-900 com texto branco) sai só com o texto
+               branco, invisível no papel. Isso força a impressão exata. */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
+    </style>
+
+
+</head>
+<body class="p-4 md:p-6 bg-white text-black">
+
+    <!-- Botão de Comando Flutuante -->
+    <div class="no-print mb-6 flex flex-wrap justify-end gap-3">
+        <button onclick="window.print()" class="bg-white text-black font-black px-6 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg border border-zinc-300 hover:bg-zinc-100 transition-all cursor-pointer">
+            🖨️ Imprimir
+        </button>
+        <button id="btn-gerar-pdf" onclick="gerarPDFRomaneio()" class="bg-[#caa85c] text-black font-black px-6 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg hover:bg-[#b5944f] transition-all cursor-pointer">
+            📄 Gerar PDF do Romaneio
+        </button>
+        <!-- Só aparece depois que o PDF termina de ser gerado, em memória —
+             assim o usuário decide se baixa, reenvia direto pro cliente ou
+             descarta e gera de novo. Nada é baixado automaticamente. -->
+        <div id="pdf-acoes" class="flex flex-wrap gap-3" style="display: none;">
+            <button id="btn-baixar-pdf-final" onclick="baixarPdfGerado()" class="bg-white text-black font-black px-6 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg border border-zinc-300 hover:bg-zinc-100 transition-all cursor-pointer">
+                ⬇️ Baixar
+            </button>
+            <button id="btn-compartilhar-pdf" style="display: none;" class="bg-black text-white font-black px-6 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg hover:bg-zinc-800 transition-all cursor-pointer" onclick="compartilharPdfGerado()">
+                📤 Enviar para Cliente
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Guarda o PDF já gerado (em memória, como Blob/File) para os botões
+        // de Baixar/Enviar usarem depois — nada é escrito em disco sozinho.
+        let _pdfBlobGerado = null;
+        let _pdfFileGerado = null;
+        let _pdfNomeArquivo = 'romaneio.pdf';
+
+        // Alguns navegadores (principalmente desktop) nem sempre suportam
+        // compartilhar arquivo via Web Share API. Testamos uma vez, com um
+        // arquivo fake, e só mostramos o botão "Enviar para Cliente" se der.
+        const suportaCompartilharArquivo = !!(navigator.canShare && navigator.share &&
+            navigator.canShare({ files: [new File(['x'], 'teste.pdf', { type: 'application/pdf' })] }));
+
+        // Gera o PDF do romaneio e guarda o resultado em memória — não baixa
+        // nem abre nada sozinho. Usa o motor de paginação do próprio
+        // html2pdf.js (mode: 'css'), que lê o "break-inside: avoid" que já
+        // está marcado no CSS em cada linha da tabela e em cada bloco
+        // importante (resumo financeiro, barra de totais) pra decidir onde
+        // pode cortar a página — preenchendo cada página o máximo possível e
+        // só empurrando pra próxima quando o bloco realmente não cabe mais.
+        //
+        // IMPORTANTE: não force nenhuma largura/viewport artificial aqui. O
+        // próprio html2pdf.js já clona o conteúdo num container do tamanho
+        // exato da folha A4 antes de capturar — mexer nisso por fora (como
+        // numa tentativa anterior) conflita com esse container interno e foi
+        // a causa do corte lateral que apareceu num teste anterior.
+        async function gerarPDFRomaneio() {
+            const conteudo = document.getElementById('romaneio-conteudo');
+            const botaoGerar = document.getElementById('btn-gerar-pdf');
+            const painelAcoes = document.getElementById('pdf-acoes');
+            if (!conteudo || conteudo.style.display === 'none') {
+                alert('O romaneio ainda está carregando. Aguarde um instante e tente novamente.');
+                return;
+            }
+
+            const textoOriginal = botaoGerar.innerHTML;
+            botaoGerar.disabled = true;
+            botaoGerar.innerHTML = '⏳ Gerando PDF...';
+            painelAcoes.style.display = 'none';
+
+            const idParaArquivo = (document.getElementById('doc-id')?.innerText || 'romaneio')
+                .replace(/[^a-zA-Z0-9-]/g, '');
+            _pdfNomeArquivo = `Romaneio-${idParaArquivo}.pdf`;
+
+            try {
+                const blob = await html2pdf().set({
+                    margin: [10, 8, 10, 8],
+                    filename: _pdfNomeArquivo,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    // Só 'css': respeita o break-inside:avoid que já está no
+                    // CSS (linhas da tabela, resumo, barra de totais). Sem
+                    // 'avoid-all', que tratava TODO elemento da árvore (cada
+                    // div, td, span...) como intocável e empurrava blocos
+                    // inteiros pra página seguinte mesmo sobrando espaço —
+                    // essa era a causa das 3 páginas soltas.
+                    pagebreak: { mode: ['css'] }
+                }).from(conteudo).outputPdf('blob');
+
+                _pdfBlobGerado = blob;
+                _pdfFileGerado = new File([blob], _pdfNomeArquivo, { type: 'application/pdf' });
+
+                document.getElementById('btn-compartilhar-pdf').style.display = suportaCompartilharArquivo ? '' : 'none';
+                painelAcoes.style.display = 'flex';
+                botaoGerar.innerHTML = '🔄 Gerar Novamente';
+            } catch (err) {
+                console.error('[gerarPDFRomaneio] erro ao gerar PDF:', err);
+                alert('Não foi possível gerar o PDF automaticamente. Use "🖨️ Imprimir" e escolha "Salvar como PDF" como alternativa.');
+                botaoGerar.innerHTML = textoOriginal;
+            } finally {
+                botaoGerar.disabled = false;
+            }
+        }
+
+        // Baixa o PDF já gerado (guardado em memória) — não gera de novo.
+        function baixarPdfGerado() {
+            if (!_pdfBlobGerado) return;
+            const url = URL.createObjectURL(_pdfBlobGerado);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = _pdfNomeArquivo;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+
+        // Abre o painel de compartilhamento nativo do aparelho (no celular,
+        // isso inclui enviar direto pelo WhatsApp) com o PDF já gerado anexado.
+        async function compartilharPdfGerado() {
+            if (!_pdfFileGerado) return;
+            if (!suportaCompartilharArquivo) {
+                alert('Este navegador não aceita compartilhar arquivos diretamente. Use o botão Baixar e envie manualmente.');
+                return;
+            }
+            try {
+                await navigator.share({
+                    files: [_pdfFileGerado],
+                    title: 'Romaneio Abella Joias',
+                    text: `Romaneio ${document.getElementById('doc-id')?.innerText || ''}`.trim()
+                });
+            } catch (err) {
+                // AbortError acontece quando o usuário só fecha a caixa de
+                // compartilhamento sem escolher nada — não é um erro de verdade.
+                if (err.name !== 'AbortError') {
+                    console.error('[compartilharPdfGerado] erro ao compartilhar:', err);
+                    alert('Não foi possível abrir o compartilhamento. Use o botão Baixar e envie manualmente.');
+                }
+            }
+        }
+    </script>
+
+    <!-- Barra de Carregamento -->
+    <div id="loader" class="text-center py-12 text-xs font-mono uppercase tracking-widest text-zinc-500 animate-pulse">
+        ⏳ Montando estrutura do romaneio...
+    </div>
+
+   <!-- Área do Romaneio Comercial -->
+<div id="romaneio-conteudo" style="display: none;" class="max-w-5xl mx-auto space-y-5">
+    <!-- Cabeçalho Principal -->
+    <div class="border-b-2 border-black pb-3 flex justify-between items-end">
+        <div>
+            <h1 class="text-2xl font-black tracking-widest font-cinzel">ABELLA JOIAS</h1>
+            <p class="text-[10px] uppercase font-mono tracking-wider text-zinc-600">Atacado de Joias no Bruto • Limeira/SP</p>
+            <p class="text-[10px] font-mono font-bold text-zinc-700 mt-0.5">WhatsApp: (19) 98820-7658</p>
+        </div>
+        <div class="text-right font-mono text-xs">
+            <p class="font-bold">ORDEM DE COMPRA: <span id="doc-id" class="text-zinc-700">#</span></p>
+            <p id="doc-data" class="text-zinc-500 text-[10px]"></p>
+        </div>
+    </div>
+
+        <!-- Dados do Cliente e Local de Entrega -->
+        <div class="grid grid-cols-2 gap-4 bg-zinc-50 p-3 rounded-xl border border-zinc-200 text-[11px] leading-relaxed">
+            <!-- Bloco Cliente -->
+            <div class="space-y-0.5 border-r border-zinc-200 pr-2">
+                <p class="font-mono text-[9px] uppercase text-zinc-400 font-black tracking-wider mb-1">📋 Dados do Cliente</p>
+                <p class="font-bold text-zinc-900 uppercase">Nome: <span id="cli-nome" class="font-medium">-</span></p>
+                <p class="font-bold text-zinc-900">WhatsApp: <span id="cli-whats" class="font-mono font-medium">-</span></p>
+                <p class="font-bold text-zinc-900 uppercase">Cidade: <span id="cli-cidade" class="font-medium">-</span></p>
+            </div>
+            <!-- Bloco Local de Entrega -->
+            <div class="space-y-0.5 pl-2">
+                <p class="font-mono text-[9px] uppercase text-zinc-400 font-black tracking-wider mb-1">📍 Local de Entrega</p>
+                <p class="font-bold text-zinc-900 uppercase">Nome: <span id="ent-nome" class="font-medium">-</span></p>
+                <p class="font-bold text-zinc-900 uppercase">Endereço: <span id="ent-rua" class="font-medium">-</span>, <span id="ent-num" class="font-medium">-</span></p>
+                <p class="font-bold text-zinc-900 uppercase">Bairro: <span id="ent-bairro" class="font-medium">-</span></p>
+                <p class="font-bold text-zinc-900 uppercase">Cidade - UF: <span id="ent-cidade-uf" class="font-medium">-</span></p>
+            </div>
+        </div>
+
+        <!-- Informações Complementares -->
+        <div class="bg-zinc-100/70 px-3 py-1.5 rounded-lg border border-zinc-200 flex justify-between text-[10px] font-mono uppercase tracking-wider text-zinc-600">
+            <div>Forma de Pagto: <span id="cli-pagamento" class="font-bold text-black">-</span></div>
+            <div id="layout-label"></div>
+        </div>
+
+        <!-- Destinatário de Renderização Dinâmica -->
+        <div id="render-target"></div>
+
+        <!-- Totais Consolidados de Rodapé -->
+        <div class="border-t-2 border-black pt-4 grid grid-cols-4 text-center font-mono text-xs font-bold bg-zinc-50 p-3 rounded-xl border border-zinc-200 break-inside-avoid">
+            <div>
+                <p class="text-[9px] text-zinc-500 uppercase">Total de Itens</p>
+                <p id="resumo-itens" class="text-base text-black mt-0.5">0</p>
+            </div>
+            <div>
+                <p class="text-[9px] text-zinc-500 uppercase">Total de Peças</p>
+                <p id="resumo-qtd" class="text-base text-black mt-0.5">0 pçs</p>
+            </div>
+            <div>
+                <p class="text-[9px] text-zinc-500 uppercase">Peso Total</p>
+                <p id="resumo-peso" class="text-base text-black mt-0.5">0.00 grs</p>
+            </div>
+            <div id="bloco-financeiro-total">
+                <p class="text-[9px] text-zinc-500 uppercase">Valor Consolidado</p>
+                <p id="resumo-financeiro" class="text-base text-black mt-0.5">R$ 0,00</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Conexão de Dependências (Em Ordem Estrita) -->
+    <script src="../js/firebase/firebase-config.js"></script>
+    <script src="js/auth-guard.js"></script>
+    <script src="../js/utils/money.js"></script>
+    <script src="../js/utils/image-helper.js"></script>
+
+    <script>
+        // Parâmetros da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const pedidoId = urlParams.get('id');
+        const layout = urlParams.get('layout') || 'lista'; 
+        const tipo = urlParams.get('tipo') || 'financeiro'; 
+
+        // Atualiza rótulo visual do modo
+        const layoutLabel = document.getElementById('layout-label');
+        if (layoutLabel) {
+            layoutLabel.innerText = `Modo: ${layout} + ${tipo}`;
+        }
+
+        // Utilitários de Formatação
+        const formatarMoedaLocal = (v) => {
+            if (window.MoneyUtils && typeof window.MoneyUtils.format === 'function') {
+                return window.MoneyUtils.format(v);
+            }
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+        };
+
+        const formatarPesoLocal = (gramas) => {
+            const g = parseFloat(gramas || 0);
+            return g < 1000 ? `${g.toFixed(2)} grs` : `${(g / 1000).toFixed(3)} kg`;
+        };
+
+        // Resolve a URL real da imagem (a maioria dos produtos salva um caminho
+        // gs://... do Firebase Storage, que precisa ser convertido para uma URL
+        // de download antes de virar um <img src>). Sem isso, a imagem cai
+        // sempre no placeholder genérico.
+        const resolverImgLocal = (url) => {
+            if (!url) return 'https://placehold.co/200';
+            return (typeof resolverImagemFirebase === 'function') ? resolverImagemFirebase(url) : url;
+        };
+
+        // Rótulo de variação (ex.: letra, dizer, cor) exibido junto ao nome do item.
+        const variacaoLabel = (item) => {
+            const v = item.variacao || item.variacaoNome || '';
+            return v ? ` <span style="color:#a16207;font-weight:600;">[${v}]</span>` : '';
+        };
+
+        // Preço bruto (antes da promoção) riscado ao lado do preço unitário,
+        // quando o item teve desconto de oferta/campanha aplicado no checkout.
+        const precoBrutoLabel = (item, precoFinalUnit) => {
+            const bruto = parseFloat(item.precoOriginal || 0);
+            if (bruto > 0 && bruto > precoFinalUnit + 0.001) {
+                return ` <span style="text-decoration:line-through;color:#a1a1aa;font-weight:400;">${formatarMoedaLocal(bruto)}</span>`;
+            }
+            return '';
+        };
+
+        function exibirErro(mensagem) {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.innerText = mensagem;
+                loader.classList.remove('animate-pulse');
+                loader.classList.add('text-red-600', 'font-bold');
+            }
+        }
+
+        // Aguarda Inicialização do Auth antes de Carregar Dados
+        if (!pedidoId) {
+            exibirErro("❌ Erro Crítico: ID do pedido ausente na URL.");
+        } else {
+            if (window.firebase && firebase.auth) {
+                firebase.auth().onAuthStateChanged((user) => {
+                    if (user) {
+                        carregarDadosRomaneio();
+                    } else {
+                        exibirErro("🔒 Erro de Permissão: Usuário não autenticado. Faça login no sistema.");
+                    }
+                });
+            } else {
+                carregarDadosRomaneio();
+            }
+        }
+
+       async function carregarDadosRomaneio() {
+    try {
+        const databaseInstancia = window.db || (window.firebase ? firebase.database() : null);
+
+        if (!databaseInstancia) {
+            throw new Error("Instância do banco de dados não disponível.");
+        }
+
+        const snap = await databaseInstancia.ref('abella/orders/' + pedidoId).once('value');
+        if (!snap.exists()) {
+            exibirErro("❌ Erro: Registro de pedido não localizado no Firebase.");
+            return;
+        }
+
+        const p = snap.val();
+        
+        // Cabeçalho
+        document.getElementById('doc-id').innerText = p.numeroPedido || p.idPedido || pedidoId; 
+        document.getElementById('doc-data').innerText = p.createdAt ? new Date(p.createdAt).toLocaleString('pt-BR') : (p.data || new Date().toLocaleString('pt-BR'));
+        document.getElementById('cli-pagamento').innerText = p.formaPagamento || p.pagamento || 'PIX';
+
+        // ==========================================
+        // 1. DADOS DO CLIENTE
+        // ==========================================
+        const nomeCliente = p.cliente || p.nomeCliente || p.nome || '-';
+        const whatsCliente = p.contato || p.whatsapp || p.whats || p.clienteWhatsapp || '-';
+        
+        // No seu Firebase, 'cidade' contém "Bacamal - MA"
+        const cidadeCliente = p.cidade || p.cidadeClienteTexto || '-';
+
+        document.getElementById('cli-nome').innerText = nomeCliente;
+        document.getElementById('cli-whats').innerText = whatsCliente;
+        document.getElementById('cli-cidade').innerText = cidadeCliente.toUpperCase();
+
+        // ==========================================
+        // 2. LOCAL DE ENTREGA / GALVÂNICA
+        // ==========================================
+        // "enderecoEntrega" é o objeto real gravado pelo checkout do cliente
+        // ({local, rua, numero, bairro, cidade}). "galvanica"/"localEntrega"/"entrega"
+        // (objeto) são usados por outros fluxos (ex.: edição manual em pedidos.html,
+        // que grava {nome, endereco, numero, bairro, cidade}). Note que "entrega"
+        // também pode vir como STRING legada — nesse caso é ignorada aqui de propósito.
+        const entregaObjOuVazio = (typeof p.entrega === 'object' && p.entrega) ? p.entrega : {};
+        const galvObj = p.galvanica || p.localEntrega || entregaObjOuVazio || {};
+        const end = p.enderecoEntrega || {};
+
+        const destNome = p.galvanicaNome || galvObj.nome || galvObj.destinatario || galvObj.galvanica || end.local || 'Langge Galvanica';
+        const destRua = p.galvanicaRua || galvObj.rua || galvObj.endereco || end.rua || p.endereco || '-';
+        const destNum = p.galvanicaNumero || galvObj.numero || end.numero || p.numero || 'S/N';
+        const destBairro = p.galvanicaBairro || galvObj.bairro || end.bairro || p.bairro || '-';
+        
+        // No seu Firebase, a entrega pega 'galvanicaCidade' ou o fallback de 'cidadeCliente' (Iracemápolis/Limeira)
+        const destCidade = p.galvanicaCidade || galvObj.cidade || end.cidade || p.cidadeCliente || 'Limeira';
+        const destUF = p.galvanicaEstado || galvObj.estado || galvObj.uf || end.estado || p.estado || 'SP';
+
+        let textoEntrega = destCidade.toUpperCase();
+        if (destUF && !textoEntrega.includes(destUF.toUpperCase())) {
+            textoEntrega += ` - ${destUF.toUpperCase()}`;
+        }
+
+        document.getElementById('ent-nome').innerText = destNome.toUpperCase();
+        document.getElementById('ent-rua').innerText = destRua.toUpperCase();
+        document.getElementById('ent-num').innerText = destNum;
+        document.getElementById('ent-bairro').innerText = destBairro.toUpperCase();
+        document.getElementById('ent-cidade-uf').innerText = textoEntrega;
+
+        // Normalização do Array de Itens (feita cedo, antes de qualquer cálculo,
+        // porque agora TODO o resumo financeiro é recalculado a partir daqui —
+        // nunca mais a partir dos campos agregados prontos do banco, que já
+        // vieram errados de outras telas em alguns pedidos).
+        let itens = p.itens || p.produtos || [];
+        if (typeof itens === 'object' && !Array.isArray(itens)) {
+            itens = Object.values(itens);
+        }
+        // O checkout do cliente salva o identificador do produto no campo "id",
+        // não em "sku". Normaliza aqui para que o SKU sempre apareça na impressão.
+        itens = itens.map(item => ({ ...item, sku: item.sku || item.id || item.codigo || '-' }));
+        // Ordena a listagem por SKU em ordem alfabética crescente.
+        itens.sort((a, b) => String(a.sku).localeCompare(String(b.sku), 'pt-BR', { numeric: true, sensitivity: 'base' }));
+
+        // Recalcula tudo (peças, peso, subtotal e total líquido) a partir dos
+        // itens de verdade — nunca a partir de p.subtotal/p.total prontos,
+        // que é justamente onde vinha o valor errado (soma da coluna "Unit."
+        // em vez de "Unit. x Qtd").
+        const resumoFin = calcularResumoFinanceiroPedido(p, itens);
+
+        // Totais do Rodapé
+        document.getElementById('resumo-itens').innerText = itens.length || 0;
+        document.getElementById('resumo-qtd').innerText = `${resumoFin.totalPecas} pçs`;
+        document.getElementById('resumo-peso').innerText = formatarPesoLocal(resumoFin.pesoTotal);
+        document.getElementById('resumo-financeiro').innerText = formatarMoedaLocal(resumoFin.total);
+        
+        if (tipo === 'conferencia') {
+            const blocoFin = document.getElementById('bloco-financeiro-total');
+            if (blocoFin) blocoFin.classList.add('invisible');
+        }
+
+        // Seleção e Renderização
+        const modelo = `${layout}_${tipo}`;
+        const renderizadores = {
+            lista_conferencia: renderListaConferencia,
+            lista_financeiro: renderListaCompleto,
+            lista_foto: renderListaCompletoFoto,
+            grade_conferencia: renderGradeConferencia,
+            grade_financeiro: renderGradeCompleto,
+            grade_foto: renderGradeCompletoFoto
+        };
+
+        const renderizador = renderizadores[modelo];
+        if (!renderizador) {
+            throw new Error(`Modelo estrutural não mapeado: ${modelo}`);
+        }
+
+        document.getElementById('render-target').innerHTML = renderizador(p, itens);
+
+        // Exibição Final
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('romaneio-conteudo').style.display = 'block';
+
+    } catch (err) {
+        console.error("Erro ao carregar romaneio:", err);
+        exibirErro("❌ Ocorreu uma exceção crítica ao sincronizar o romaneio: " + err.message);
+    }
+}
+        /* ==================== RENDERS DE COMPONENTES ==================== */
+
+        // Única fonte de verdade para os números do romaneio: soma peças, peso
+        // e subtotal direto da lista de itens (qtd x unitário de cada linha) e
+        // só então aplica os descontos e o frete. Isso substitui o valor pronto
+        // que vinha do banco (p.subtotal/p.total), que em alguns pedidos estava
+        // sendo gravado como a soma da coluna "Unit." sem multiplicar pela Qtd.
+        function calcularResumoFinanceiroPedido(p, itens) {
+            let subtotal = 0, totalPecas = 0, pesoTotal = 0;
+            itens.forEach(item => {
+                const unit = parseFloat(item.precoFinal || item.price || item.preco || 0);
+                const qtd = parseInt(item.quantidade || 1);
+                const peso = parseFloat(item.peso || item.weight || 0);
+                subtotal += unit * qtd;
+                totalPecas += qtd;
+                pesoTotal += peso * qtd;
+            });
+
+            const valorDescontoOfertas = parseFloat(p.descontoOfertas || p.descontoCategoria || p.descontoCampanha || 0);
+            const valorDescontoFaixa = parseFloat(p.descontoFaixaValor || p.descontoFaixa?.desconto || 0);
+            const valorDescontoCupom = parseFloat(p.descontoCupom || 0);
+            const valorDescontoPeso = parseFloat(p.descontoPeso || 0);
+            const valorFrete = parseFloat(p.frete || 0);
+
+            // Se o pedido guardou um PERCENTUAL de desconto (novo campo
+            // percentualDesconto/percentualDescontoPix), o valor em R$ é
+            // recalculado em cima do subtotal correto acima — nunca lido
+            // pronto do banco, que poderia ter sido calculado sobre o
+            // subtotal errado. Só cai no valor fixo salvo (p.descontoPix/
+            // p.desconto) quando o pedido não usa percentual.
+            const percentualDescontoAplicado = parseFloat(p.percentualDesconto || p.percentualDescontoPix || 0);
+            const valorDescontoPix = percentualDescontoAplicado > 0
+                ? (subtotal * percentualDescontoAplicado / 100)
+                : parseFloat(p.descontoPix || p.desconto || 0);
+
+            const totalDescontos = valorDescontoOfertas + valorDescontoFaixa + valorDescontoCupom + valorDescontoPeso + valorDescontoPix;
+            const total = Math.max(0, subtotal - totalDescontos + valorFrete);
+
+            return {
+                subtotal, totalPecas, pesoTotal, total,
+                valorDescontoOfertas, valorDescontoFaixa, valorDescontoCupom,
+                valorDescontoPeso, valorDescontoPix, percentualDescontoAplicado, valorFrete
+            };
+        }
+
+        function renderResumoFinanceiro(p, itens) {
+            // Cada linha de desconto/custo só é exibida quando o valor for
+            // diferente de zero — evita poluir o romaneio com "-R$ 0,00" em
+            // toda promoção que não se aplicou àquele pedido específico.
+            const r = calcularResumoFinanceiroPedido(p, itens);
+
+            const linhas = [
+                {
+                    valor: r.valorDescontoOfertas,
+                    label: 'Descontos de Ofertas:',
+                    html: `-${formatarMoedaLocal(r.valorDescontoOfertas)}`,
+                    cor: 'text-red-600'
+                },
+                {
+                    valor: r.valorDescontoFaixa,
+                    label: `Desconto por Valor de Compra${p.faixaValorAplicada ? ` (${formatarMoedaLocal(p.faixaValorAplicada)}+)` : ''}:`,
+                    html: `-${formatarMoedaLocal(r.valorDescontoFaixa)}`,
+                    cor: 'text-red-600'
+                },
+                {
+                    valor: r.valorDescontoCupom,
+                    label: `Cupom${p.cupomAplicado ? ` (${p.cupomAplicado})` : ''}:`,
+                    html: `-${formatarMoedaLocal(r.valorDescontoCupom)}`,
+                    cor: 'text-red-600'
+                },
+                {
+                    valor: r.valorDescontoPeso,
+                    label: 'Desconto por Peso Acumulado:',
+                    html: `-${formatarMoedaLocal(r.valorDescontoPeso)}`,
+                    cor: 'text-red-600'
+                },
+                {
+                    valor: r.valorDescontoPix,
+                    label: `Desconto${(p.formaPagamento || p.pagamento) ? ` Modalidade ${(p.formaPagamento || p.pagamento).toUpperCase()}` : ''}${r.percentualDescontoAplicado ? ` (${r.percentualDescontoAplicado}%)` : ''}:`,
+                    html: `-${formatarMoedaLocal(r.valorDescontoPix)}`,
+                    cor: 'text-red-600'
+                },
+                {
+                    valor: r.valorFrete,
+                    label: 'Custo Adicional de Frete:',
+                    html: formatarMoedaLocal(r.valorFrete),
+                    cor: 'text-green-700'
+                }
+            ];
+
+            const linhasHtml = linhas
+                .filter(l => Math.abs(l.valor) > 0.001)
+                .map(l => `
+                    <div class="text-zinc-500">${l.label}</div>
+                    <div class="text-right font-mono ${l.cor}">${l.html}</div>
+                `).join('');
+
+            return `
+            <div class="mt-4 border-t-2 border-black pt-3 break-inside-avoid">
+                <h3 class="font-bold text-[11px] uppercase tracking-wider mb-2 text-zinc-800">RESUMO FINANCEIRO</h3>
+                <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-[11px]">
+                    <div class="font-bold text-zinc-800">Subtotal Bruto (sem descontos):</div>
+                    <div class="font-bold text-right font-mono text-zinc-800">${formatarMoedaLocal(r.subtotal)}</div>
+                    ${linhasHtml}
+                    <div class="font-bold border-t border-black pt-1.5 text-xs text-black">VALOR FINAL LÍQUIDO</div>
+                    <div class="font-black text-right border-t border-black pt-1.5 text-xs text-black font-mono">${formatarMoedaLocal(r.total)}</div>
+                </div>
+            </div>`;
+        }
+
+        function renderListaConferencia(p, itens) {
+            return `
+                <table class="w-full border-collapse text-[11px]">
+                    <thead>
+                        <tr class="border-b border-black text-left">
+                            <th class="py-1.5 font-bold text-zinc-700">SKU</th>
+                            <th class="py-1.5 font-bold text-zinc-700">Descrição do Item Bruto</th>
+                            <th class="py-1.5 text-center font-bold text-zinc-700 w-16">Qtd</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200">
+                        ${itens.map(item => `
+                            <tr>
+                                <td class="py-1.5 font-mono text-zinc-600">${item.sku || '-'}</td>
+                                <td class="py-1.5 uppercase">${item.nome || item.name || '-'}${variacaoLabel(item)}</td>
+                                <td class="py-1.5 text-center font-bold text-zinc-900">${item.quantidade || 1}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>`;
+        }
+        
+        function renderListaCompleto(p, itens) {
+            return `
+                <table class="w-full text-[11px] border-collapse">
+                    <thead>
+                        <tr class="border-b border-black text-left">
+                            <th class="py-1.5">SKU</th>
+                            <th class="py-1.5">Produto</th>
+                            <th class="py-1.5 text-center">Qtd</th>
+                            <th class="py-1.5 text-center">Peso Un.</th>
+                            <th class="py-1.5 text-right">Preço Un.</th>
+                            <th class="py-1.5 text-right">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200">
+                    ${itens.map(item => {
+                        const qtd = parseInt(item.quantidade || 1);
+                        const unit = parseFloat(item.precoFinal || item.price || item.preco || 0);
+                        return `
+                            <tr>
+                                <td class="py-1.5 font-mono">${item.sku || '-'}</td>
+                                <td class="py-1.5 uppercase">${item.nome || item.name || '-'}${variacaoLabel(item)}</td>
+                                <td class="py-1.5 text-center font-bold">${qtd}</td>
+                                <td class="py-1.5 text-center font-mono">${formatarPesoLocal(item.peso || item.weight || 0)}</td>
+                                <td class="py-1.5 text-right font-mono">${formatarMoedaLocal(unit)}${precoBrutoLabel(item, unit)}</td>
+                                <td class="py-1.5 text-right font-bold font-mono">${formatarMoedaLocal(unit * qtd)}</td>
+                            </tr>`;
+                    }).join('')}
+                    </tbody>
+                </table>
+                ${renderResumoFinanceiro(p, itens)}`;
+        }
+
+        function renderListaCompletoFoto(p, itens) {
+            return `
+            <div class="space-y-4">
+                <table class="w-full border-collapse text-[11px]">
+                    <thead>
+                        <tr class="border-b border-black text-left">
+                            <th class="py-1.5 w-14">Miniatura</th>
+                            <th class="py-1.5">SKU</th>
+                            <th class="py-1.5">Especificação</th>
+                            <th class="py-1.5 text-center">Qtd</th>
+                            <th class="py-1.5 text-center">Massa</th>
+                            <th class="py-1.5 text-right">Unit.</th>
+                            <th class="py-1.5 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200">
+                        ${itens.map(item => {
+                            const qtd = parseInt(item.quantidade || 1);
+                            const peso = parseFloat(item.peso || item.weight || 0);
+                            const preco = parseFloat(item.precoFinal || item.price || item.preco || 0);
+                            return `
+                            <tr>
+                                <td class="py-1">
+                                    <img src="${resolverImgLocal(item.image || item.imagem)}" style="width:42px;height:42px;object-fit:cover;border:1px solid #e4e4e7;border-radius:6px;" onerror="this.src='https://placehold.co/100'">
+                                </td>
+                                <td class="font-mono text-zinc-600">${item.sku || '-'}</td>
+                                <td class="uppercase font-medium">${item.nome || item.name || '-'}${variacaoLabel(item)}</td>
+                                <td class="text-center font-bold text-black">${qtd}</td>
+                                <td class="text-center font-mono text-zinc-600">${formatarPesoLocal(peso)}</td>
+                                <td class="text-right font-mono">${formatarMoedaLocal(preco)}${precoBrutoLabel(item, preco)}</td>
+                                <td class="text-right font-bold font-mono">${formatarMoedaLocal(preco * qtd)}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+                ${renderResumoFinanceiro(p, itens)}
+            </div>`;
+        }
+
+        function renderGradeConferencia(p, itens) {
+            return `
+            <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                ${itens.map(item => `
+                    <div class="border border-zinc-300 rounded-lg p-1.5 bg-white text-[10px] flex flex-col justify-between break-inside-avoid shadow-sm">
+                        <div class="flex justify-between items-start gap-1 mb-1">
+                            <span class="font-mono text-[9px] text-zinc-400 font-bold tracking-tight">SKU</span>
+                            <span class="bg-black text-white px-1 py-0.5 rounded text-[10px] font-black">${item.quantidade || 1}x</span>
+                        </div>
+                        <div class="font-mono text-zinc-800 font-medium truncate mb-1" title="${item.sku}">${item.sku || '-'}</div>
+                        <div class="font-bold uppercase text-[10px] leading-tight text-zinc-900 line-clamp-2 h-6">${item.nome || item.name || '-'}${variacaoLabel(item)}</div>
+                    </div>`).join('')}
+            </div>`;
+        }
+
+        function renderGradeCompleto(p, itens) {
+            return `
+            <div class="space-y-4">
+                <div class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                    ${itens.map(item => {
+                        const qtd = parseInt(item.quantidade || 1);
+                        const peso = parseFloat(item.peso || item.weight || 0);
+                        const preco = parseFloat(item.precoFinal || item.price || item.preco || 0);
+                        return `
+                        <div class="border border-zinc-300 rounded-lg p-2 bg-white flex flex-col justify-between text-[10px] break-inside-avoid shadow-sm">
+                            <div>
+                                <div class="flex justify-between items-start gap-1 mb-1">
+                                    <span class="font-mono text-[8px] text-zinc-400 font-bold">SKU</span>
+                                    <span class="bg-zinc-900 text-white px-1 py-0.5 rounded text-[10px] font-black">${qtd}x</span>
+                                </div>
+                                <div class="font-mono text-zinc-700 truncate mb-1">${item.sku || '-'}</div>
+                                <div class="font-bold uppercase text-[10px] leading-tight text-black line-clamp-2 h-6 mb-2">${item.nome || item.name || '-'}${variacaoLabel(item)}</div>
+                            </div>
+                            <div class="border-t border-zinc-100 pt-1 text-[9px] font-mono space-y-0.5 bg-zinc-50/50 p-1 rounded">
+                                <div class="flex justify-between text-zinc-500"><span>Peso:</span><span class="text-zinc-900">${formatarPesoLocal(peso)}</span></div>
+                                <div class="flex justify-between text-zinc-500"><span>Unit:</span><span class="text-zinc-900">${formatarMoedaLocal(preco)}</span></div>
+                                <div class="flex justify-between font-bold text-zinc-600 border-t border-dashed mt-1 pt-0.5"><span>Total:</span><span class="text-black">${formatarMoedaLocal(preco * qtd)}</span></div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                ${renderResumoFinanceiro(p, itens)}
+            </div>`;
+        }
+
+        function renderGradeCompletoFoto(p, itens) {
+            return `
+            <div class="space-y-4">
+                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+                    ${itens.map(item => {
+                        const qtd = parseInt(item.quantidade || 1);
+                        const peso = parseFloat(item.peso || item.weight || 0);
+                        const preco = parseFloat(item.precoFinal || item.price || item.preco || 0);
+                        return `
+                        <div class="border border-zinc-300 rounded-lg overflow-hidden bg-white flex flex-col justify-between text-[10px] break-inside-avoid shadow-sm">
+                            <div class="h-24 bg-zinc-50 border-b border-zinc-100 overflow-hidden relative">
+                                <img src="${resolverImgLocal(item.image || item.imagem)}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/200'">
+                                <span class="absolute top-1 right-1 bg-black text-white px-1.5 py-0.5 rounded text-[10px] font-black shadow-md">${qtd}x</span>
+                            </div>
+                            <div class="p-1.5 flex flex-col flex-1 justify-between bg-white">
+                                <div class="mb-1.5">
+                                    <div class="font-mono text-[8px] text-zinc-400 font-bold uppercase">SKU ${item.sku || '-'}</div>
+                                    <div class="font-black uppercase text-[10px] leading-tight text-zinc-900 line-clamp-2 mt-0.5 h-6">${item.nome || item.name || '-'}${variacaoLabel(item)}</div>
+                                </div>
+                                <div class="border-t border-zinc-100 pt-1 text-[9px] font-mono space-y-0.5 bg-zinc-50 p-1 rounded">
+                                    <div class="flex justify-between"><span>Peso Un:</span><span>${formatarPesoLocal(peso)}</span></div>
+                                    <div class="flex justify-between text-zinc-500"><span>Valor:</span><span>${formatarMoedaLocal(preco)}</span></div>
+                                    <div class="flex justify-between font-bold border-t border-zinc-200/60 mt-0.5 pt-0.5"><span>Total:</span><span class="text-black">${formatarMoedaLocal(preco * qtd)}</span></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>
+                ${renderResumoFinanceiro(p, itens)}
+            </div>`;
+        }
+    </script>
+</body>
+</html>
